@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fake Company Structure Explorer</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f1b33;
+      --card:#111f3d;
+      --muted:#8aa0c6;
+      --text:#e7efff;
+      --accent:#4da3ff;
+      --accent2:#7c5cff;
+      --ok:#2ee59d;
+      --warn:#ffcc66;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html, body { height: 100%; margin: 0; font-family: var(--sans); background: radial-gradient(1200px 800px at 20% 10%, #13244b, var(--bg)); color: var(--text); overflow: hidden; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      height: 100%;
+    }
+
+    /* Top bar */
+    .topbar{
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 392px;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .pill {
+      pointer-events: auto;
+      background: rgba(15,27,51,.85);
+      border: 1px solid rgba(77,163,255,.25);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      border-radius: 999px;
+      padding: 10px 12px;
+      display:flex;
+      gap: 10px;
+      align-items:center;
+    }
+    .pill input{
+      width: 280px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .pill .hint{
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .btn{
+      pointer-events:auto;
+      border: 1px solid rgba(77,163,255,.35);
+      background: linear-gradient(180deg, rgba(77,163,255,.18), rgba(77,163,255,.08));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 999px;
+      cursor:pointer;
+      user-select:none;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      font-weight: 600;
+      letter-spacing: .2px;
+    }
+    .btn:hover{ border-color: rgba(77,163,255,.65); }
+    .btn:active{ transform: translateY(1px); }
+
+    /* Canvas area */
+    .stage {
+      position: relative;
+      overflow: hidden;
+    }
+    .grid {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 36px 36px;
+      opacity:.35;
+      transform-origin: 0 0;
+      pointer-events:none;
+    }
+    svg {
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      transform-origin: 0 0;
+      cursor: grab;
+    }
+    svg:active { cursor: grabbing; }
+
+    /* Side panel */
+    .panel {
+      background: linear-gradient(180deg, rgba(17,31,61,.92), rgba(15,27,51,.92));
+      border-left: 1px solid rgba(255,255,255,.08);
+      box-shadow: -12px 0 40px rgba(0,0,0,.35);
+      padding: 16px;
+      overflow:auto;
+    }
+    .brand {
+      display:flex; align-items:center; gap:10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 12px;
+    }
+    .logo {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: conic-gradient(from 220deg, var(--accent), var(--accent2), var(--ok), var(--accent));
+      box-shadow: 0 10px 18px rgba(0,0,0,.35);
+    }
+    .brand h1{ font-size: 14px; margin:0; }
+    .brand p{ margin:0; color: var(--muted); font-size: 12px; }
+    .card{
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+      margin-bottom: 12px;
+    }
+    .card h2{ margin:0 0 8px; font-size: 14px; }
+    .kv{
+      display:grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px 10px;
+      font-size: 13px;
+      align-items:center;
+    }
+    .k{ color: var(--muted); }
+    .v{ color: var(--text); }
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(77,163,255,.10);
+      font-size: 12px;
+      color: var(--text);
+      font-family: var(--mono);
+    }
+    .small{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Node styles (SVG) */
+    .edge { stroke: rgba(173,196,255,.25); stroke-width: 2; }
+    .edge.highlight { stroke: rgba(77,163,255,.75); }
+
+    .node rect{
+      fill: rgba(17,31,61,.85);
+      stroke: rgba(255,255,255,.10);
+      stroke-width: 1.5;
+      rx: 14; ry: 14;
+      filter: drop-shadow(0 14px 18px rgba(0,0,0,.35));
+    }
+    .node .title{
+      font-size: 13px;
+      font-weight: 700;
+      fill: var(--text);
+    }
+    .node .subtitle{
+      font-size: 11px;
+      fill: rgba(231,239,255,.75);
+    }
+    .node .meta{
+      font-size: 10.5px;
+      fill: rgba(231,239,255,.55);
+      font-family: var(--mono);
+    }
+    .node .dot{
+      fill: rgba(77,163,255,.9);
+    }
+    .node.selected rect{
+      stroke: rgba(77,163,255,.8);
+      stroke-width: 2.5;
+    }
+    .node.dim { opacity: .25; }
+    .node:hover rect{
+      stroke: rgba(77,163,255,.55);
+    }
+    .toggle{
+      cursor:pointer;
+    }
+    .toggle circle{
+      fill: rgba(255,255,255,.06);
+      stroke: rgba(255,255,255,.18);
+      stroke-width: 1.5;
+    }
+    .toggle text{
+      font-size: 13px;
+      fill: rgba(231,239,255,.85);
+      font-family: var(--mono);
+      text-anchor: middle;
+      dominant-baseline: central;
+      user-select: none;
+      pointer-events:none;
+    }
+
+    /* Footer micro HUD */
+    .hud{
+      position:absolute;
+      left:16px; bottom:16px;
+      z-index: 20;
+      display:flex; gap:10px;
+      pointer-events:none;
+    }
+    .hud .pill { pointer-events:auto; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="stage" id="stage">
+      <div class="topbar">
+        <div class="pill">
+          <input id="search" placeholder="Search people/teams… (try: 'Security', 'Ava', 'VP')" />
+          <span class="hint">Enter ↵ to jump</span>
+        </div>
+        <button class="btn" id="resetBtn">Reset view</button>
+        <button class="btn" id="expandAllBtn">Expand all</button>
+        <button class="btn" id="collapseAllBtn">Collapse all</button>
+      </div>
+
+      <div class="grid" id="grid"></div>
+      <svg id="svg" viewBox="0 0 1400 900" aria-label="Org chart explorer">
+        <g id="viewport"></g>
+      </svg>
+
+      <div class="hud">
+        <div class="pill"><span class="hint">Drag background to pan • Scroll to zoom • Click nodes for details</span></div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Northstar Dynamics</h1>
+          <p>Interactive org explorer (fake company, real vibes)</p>
+        </div>
+      </div>
+
+      <div class="card" id="detailsCard">
+        <h2>Node details</h2>
+        <div class="small">Click a node to see info here. Search to jump around. Expand/collapse to explore the structure.</div>
+      </div>
+
+      <div class="card">
+        <h2>How this demo is structured</h2>
+        <div class="small">
+          It’s a tree layout rendered into SVG. Each node is a little “card” with a toggle for children.
+          The view supports pan+zoom (CSS transform on an SVG group) and selection state.
+        </div>
+        <ul class="list">
+          <li>Data: editable JSON object in the script</li>
+          <li>Layout: simple recursive placement with fixed gaps</li>
+          <li>Interactions: select, toggle branches, search, center-on-node</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+<script>
+/** ---------------------------
+ *  1) Fake company data
+ *  --------------------------- */
+const ORG = {
+  id: "ceo",
+  name: "Ava Chen",
+  title: "Chief Executive Officer",
+  dept: "Executive",
+  location: "New York, NY",
+  tags: ["Strategy", "Customers", "Capital"],
+  notes: "Keeps the ship pointed at the North Star (and occasionally at revenue).",
+  children: [
+    {
+      id: "vp-product",
+      name: "Mateo Rivera",
+      title: "VP, Product",
+      dept: "Product",
+      location: "Austin, TX",
+      tags: ["Roadmap", "UX", "Pricing"],
+      notes: "Translates 'we should' into 'we shipped'.",
+      children: [
+        { id: "dir-ux", name: "Noor Patel", title: "Director, UX", dept: "Design", location: "Remote", tags: ["Research","Design Systems"], notes: "Owns the design language and user testing.",
+          children: [
+            { id: "team-uxr", name: "UX Research", title: "Team", dept: "Design", location: "Remote", tags: ["Interviews","Surveys"], notes: "Finds problems users didn’t know they had." },
+            { id: "team-ui", name: "UI Design", title: "Team", dept: "Design", location: "Remote", tags: ["Components","Visuals"], notes: "Makes it pretty, but also legible." },
+          ]
+        },
+        { id: "dir-pm", name: "Jordan Lee", title: "Director, Product Management", dept: "Product", location: "Austin, TX", tags: ["Backlog","OKRs"], notes: "Owns prioritization and release coordination.",
+          children: [
+            { id: "team-platform", name: "Platform PM", title: "Team", dept: "Product", location: "Austin, TX", tags: ["APIs","Integrations"], notes: "Keeps the core platform coherent." },
+            { id: "team-growth", name: "Growth PM", title: "Team", dept: "Product", location: "Austin, TX", tags: ["Funnels","Experimentation"], notes: "Turns curiosity into conversions." },
+          ]
+        }
+      ]
+    },
+    {
+      id: "vp-eng",
+      name: "Priya Nandakumar",
+      title: "VP, Engineering",
+      dept: "Engineering",
+      location: "Seattle, WA",
+      tags: ["Delivery", "Reliability", "Architecture"],
+      notes: "Herds cats. The cats are microservices.",
+      children: [
+        { id: "dir-fe", name: "Ethan Brooks", title: "Director, Frontend", dept: "Engineering", location: "Seattle, WA", tags: ["Web","Design Systems"], notes: "Owns the client experience.",
+          children: [
+            { id: "team-web", name: "Web App Squad", title: "Team", dept: "Engineering", location: "Seattle, WA", tags: ["React","Performance"], notes: "Builds the primary web application." },
+            { id: "team-dap", name: "Digital Adoption", title: "Team", dept: "Engineering", location: "Remote", tags: ["Guides","Analytics"], notes: "Builds in-app guidance and learning UX." },
+          ]
+        },
+        { id: "dir-be", name: "Sofia Kim", title: "Director, Backend", dept: "Engineering", location: "Seattle, WA", tags: ["APIs","Data"], notes: "Owns core services and data models.",
+          children: [
+            { id: "team-api", name: "API Core", title: "Team", dept: "Engineering", location: "Seattle, WA", tags: ["REST","Auth"], notes: "Builds and maintains core APIs." },
+            { id: "team-data", name: "Data Platform", title: "Team", dept: "Engineering", location: "Remote", tags: ["Pipelines","Warehousing"], notes: "Keeps the data flowing, clean-ish." },
+          ]
+        },
+        { id: "dir-sre", name: "Omar El-Sayed", title: "Director, SRE", dept: "Engineering", location: "Remote", tags: ["Uptime","Observability"], notes: "Turns incidents into lessons.",
+          children: [
+            { id: "team-ops", name: "Ops & On-Call", title: "Team", dept: "Engineering", location: "Remote", tags: ["Runbooks","Escalation"], notes: "Keeps the lights on." },
+            { id: "team-sec", name: "Security", title: "Team", dept: "Engineering", location: "Remote", tags: ["Threat Model","Compliance"], notes: "Keeps the gremlins out." },
+          ]
+        }
+      ]
+    },
+    {
+      id: "vp-sales",
+      name: "Renee Davis",
+      title: "VP, Sales",
+      dept: "Revenue",
+      location: "Chicago, IL",
+      tags: ["Pipeline", "Enterprise", "Partners"],
+      notes: "Makes friends, then makes deals, then makes it look easy.",
+      children: [
+        { id: "dir-ent", name: "Caleb Wong", title: "Director, Enterprise Sales", dept: "Revenue", location: "Chicago, IL", tags: ["SLED","Healthcare"], notes: "Owns big-ticket accounts.",
+          children: [
+            { id: "team-aes", name: "Account Executives", title: "Team", dept: "Revenue", location: "Chicago, IL", tags: ["Discovery","Negotiation"], notes: "Closes and renews." }
+          ]
+        },
+        { id: "dir-se", name: "Mina Torres", title: "Director, Sales Engineering", dept: "Revenue", location: "Remote", tags: ["Demos","Solutions"], notes: "Turns 'can you do X?' into 'yes, here’s how.'",
+          children: [
+            { id: "team-demo", name: "Demo Lab", title: "Team", dept: "Revenue", location: "Remote", tags: ["POCs","Environments"], notes: "Runs proof-of-concepts and demo environments." }
+          ]
+        }
+      ]
+    },
+    {
+      id: "cfo",
+      name: "Graham Ives",
+      title: "Chief Financial Officer",
+      dept: "Finance",
+      location: "Boston, MA",
+      tags: ["Runway", "Forecasting", "Controls"],
+      notes: "Keeps spending aligned with reality (rude, but necessary).",
+      children: [
+        { id: "dir-finops", name: "Lena Novak", title: "Director, FP&A", dept: "Finance", location: "Boston, MA", tags: ["Budget","Modeling"], notes: "Forecasts everything, including forecasting.",
+          children: [
+            { id: "team-fpna", name: "FP&A Analysts", title: "Team", dept: "Finance", location: "Boston, MA", tags: ["Reports","Variance"], notes: "Builds dashboards and budgets." }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+/** ---------------------------
+ *  2) Build an index for search
+ *  --------------------------- */
+function flatten(node, arr = [], parent = null){
+  arr.push({ node, parent });
+  (node.children || []).forEach(ch => flatten(ch, arr, node));
+  return arr;
+}
+const FLAT = flatten(ORG);
+const byId = new Map(FLAT.map(x => [x.node.id, x.node]));
+
+/** ---------------------------
+ *  3) Layout engine (simple tree)
+ *  --------------------------- */
+const layout = new Map(); // id -> {x,y, depth, width, height}
+const NODE_W = 220, NODE_H = 86;
+const GAP_X = 34, GAP_Y = 38;
+const MARGIN = 60;
+
+let collapsed = new Set(); // ids collapsed
+
+function visibleChildren(n){
+  if (!n.children || n.children.length === 0) return [];
+  if (collapsed.has(n.id)) return [];
+  return n.children;
+}
+
+// Returns subtree width in "units" and places nodes
+function measureAndPlace(node, depth, x0, y0){
+  const kids = visibleChildren(node);
+  const totalKids = kids.length;
+
+  if (totalKids === 0){
+    const x = x0;
+    const y = y0;
+    layout.set(node.id, { x, y, depth, w: NODE_W, h: NODE_H });
+    return NODE_W;
+  }
+
+  // Measure children widths
+  const childWidths = [];
+  let sum = 0;
+  for (const ch of kids){
+    const cw = measureAndPlace(ch, depth + 1, 0, 0); // temporary
+    childWidths.push(cw);
+    sum += cw;
+  }
+  sum += GAP_X * (totalKids - 1);
+
+  // Position this node centered over its children
+  const x = x0 + (sum - NODE_W)/2;
+  const y = y0;
+
+  layout.set(node.id, { x, y, depth, w: NODE_W, h: NODE_H });
+
+  // Now actually place children
+  let cursor = x0;
+  for (let i=0; i<kids.length; i++){
+    const ch = kids[i];
+    const cw = childWidths[i];
+    const childX0 = cursor;
+    const childY0 = y0 + NODE_H + GAP_Y;
+    shiftSubtree(ch, childX0, childY0); // shift the subtree rooted at ch
+    cursor += cw + GAP_X;
+  }
+
+  return Math.max(sum, NODE_W);
+}
+
+// Since measureAndPlace placed children temporarily at 0,0, we shift based on new origin.
+function shiftSubtree(node, x0, y0){
+  // re-place rooted at node using measured widths, but with absolute coords
+  const kids = visibleChildren(node);
+  const totalKids = kids.length;
+
+  if (totalKids === 0){
+    layout.set(node.id, { x: x0, y: y0, depth: (layout.get(node.id)?.depth ?? 0), w: NODE_W, h: NODE_H });
+    return NODE_W;
+  }
+
+  // Compute child widths from a fresh measure pass (cheap enough for this size)
+  const childWidths = kids.map(ch => measureWidth(ch));
+  let sum = childWidths.reduce((a,b)=>a+b,0) + GAP_X*(totalKids-1);
+  const x = x0 + (sum - NODE_W)/2;
+  const y = y0;
+
+  layout.set(node.id, { x, y, depth: (layout.get(node.id)?.depth ?? 0), w: NODE_W, h: NODE_H });
+
+  let cursor = x0;
+  for (let i=0;i<kids.length;i++){
+    const ch = kids[i];
+    const cw = childWidths[i];
+    shiftSubtree(ch, cursor, y0 + NODE_H + GAP_Y);
+    cursor += cw + GAP_X;
+  }
+  return Math.max(sum, NODE_W);
+}
+
+function measureWidth(node){
+  const kids = visibleChildren(node);
+  if (!kids.length) return NODE_W;
+  const widths = kids.map(measureWidth);
+  return Math.max(NODE_W, widths.reduce((a,b)=>a+b,0) + GAP_X*(kids.length-1));
+}
+
+function computeLayout(){
+  layout.clear();
+  const totalW = measureWidth(ORG);
+  // initial placement
+  measureAndPlace(ORG, 0, MARGIN, MARGIN);
+  // Ensure everything has a depth stored
+  for (const {node} of FLAT){
+    const l = layout.get(node.id);
+    if (l) l.depth = depthOf(node.id);
+  }
+  return totalW;
+}
+function depthOf(id){
+  // derive from parent links
+  let d=0;
+  let cur = FLAT.find(x=>x.node.id===id);
+  while(cur && cur.parent){ d++; cur = FLAT.find(x=>x.node.id===cur.parent.id); }
+  return d;
+}
+
+/** ---------------------------
+ *  4) Render SVG
+ *  --------------------------- */
+const svg = document.getElementById("svg");
+const viewport = document.getElementById("viewport");
+const detailsCard = document.getElementById("detailsCard");
+
+let selectedId = null;
+
+function render(){
+  computeLayout();
+
+  // Determine bounds
+  const xs = [], ys = [];
+  for (const [id, l] of layout){
+    xs.push(l.x, l.x + NODE_W);
+    ys.push(l.y, l.y + NODE_H);
+  }
+  const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1400);
+  const minY = Math.min(...ys, 0), maxY = Math.max(...ys, 900);
+
+  svg.setAttribute("viewBox", `${minX-80} ${minY-80} ${(maxX-minX)+160} ${(maxY-minY)+160}`);
+
+  viewport.innerHTML = "";
+
+  // Edges first
+  for (const {node} of FLAT){
+    const parent = FLAT.find(x=>x.node.id===node.id)?.parent;
+    if (!parent) continue;
+    if (!layout.has(node.id) || !layout.has(parent.id)) continue;
+
+    // Only draw if parent is not collapsed (i.e., child visible)
+    if (collapsed.has(parent.id)) continue;
+
+    const a = layout.get(parent.id);
+    const b = layout.get(node.id);
+
+    const x1 = a.x + NODE_W/2;
+    const y1 = a.y + NODE_H;
+    const x2 = b.x + NODE_W/2;
+    const y2 = b.y;
+
+    const midY = (y1 + y2) / 2;
+    const d = `M ${x1} ${y1} C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "edge");
+    if (selectedId && (node.id===selectedId || parent.id===selectedId)) path.classList.add("highlight");
+    viewport.appendChild(path);
+  }
+
+  // Nodes
+  for (const {node} of FLAT){
+    if (!layout.has(node.id)) continue;
+
+    const l = layout.get(node.id);
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class", "node" + (node.id === selectedId ? " selected":""));
+    g.setAttribute("transform", `translate(${l.x}, ${l.y})`);
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("width", NODE_W);
+    rect.setAttribute("height", NODE_H);
+
+    // tiny depth marker
+    const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dot.setAttribute("class","dot");
+    dot.setAttribute("cx", 16);
+    dot.setAttribute("cy", 18);
+    dot.setAttribute("r", 5);
+
+    const title = document.createElementNS("http://www.w3.org/2000/svg","text");
+    title.setAttribute("class","title");
+    title.setAttribute("x", 30);
+    title.setAttribute("y", 23);
+    title.textContent = node.name;
+
+    const subtitle = document.createElementNS("http://www.w3.org/2000/svg","text");
+    subtitle.setAttribute("class","subtitle");
+    subtitle.setAttribute("x", 16);
+    subtitle.setAttribute("y", 46);
+    subtitle.textContent = node.title;
+
+    const meta = document.createElementNS("http://www.w3.org/2000/svg","text");
+    meta.setAttribute("class","meta");
+    meta.setAttribute("x", 16);
+    meta.setAttribute("y", 68);
+    meta.textContent = `${node.dept} • ${node.location}`;
+
+    g.appendChild(rect);
+    g.appendChild(dot);
+    g.appendChild(title);
+    g.appendChild(subtitle);
+    g.appendChild(meta);
+
+    // Toggle button if has children
+    if (node.children && node.children.length){
+      const tg = document.createElementNS("http://www.w3.org/2000/svg","g");
+      tg.setAttribute("class","toggle");
+      tg.setAttribute("transform", `translate(${NODE_W-22}, 18)`);
+
+      const c = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      c.setAttribute("r", 11);
+      c.setAttribute("cx", 0);
+      c.setAttribute("cy", 0);
+
+      const t = document.createElementNS("http://www.w3.org/2000/svg","text");
+      t.setAttribute("x", 0);
+      t.setAttribute("y", 1);
+      t.textContent = collapsed.has(node.id) ? "+" : "–";
+
+      tg.appendChild(c);
+      tg.appendChild(t);
+
+      tg.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if (collapsed.has(node.id)) collapsed.delete(node.id);
+        else collapsed.add(node.id);
+        render();
+      });
+
+      g.appendChild(tg);
+    }
+
+    g.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      select(node.id);
+    });
+
+    viewport.appendChild(g);
+  }
+
+  applySearchDim();
+}
+
+function select(id){
+  selectedId = id;
+  const n = byId.get(id);
+  updateDetails(n);
+  render();
+}
+
+function updateDetails(n){
+  if (!n){
+    detailsCard.innerHTML = `<h2>Node details</h2><div class="small">Click a node to see info here.</div>`;
+    return;
+  }
+  const tags = (n.tags || []).map(t => `<span class="badge">${t}</span>`).join(" ");
+  detailsCard.innerHTML = `
+    <h2>${escapeHtml(n.name)}</h2>
+    <div class="kv">
+      <div class="k">Title</div><div class="v">${escapeHtml(n.title)}</div>
+      <div class="k">Department</div><div class="v">${escapeHtml(n.dept)}</div>
+      <div class="k">Location</div><div class="v">${escapeHtml(n.location)}</div>
+      <div class="k">Reports</div><div class="v">${(n.children?.length || 0)} direct</div>
+    </div>
+    <div style="height:10px"></div>
+    <div>${tags || `<span class="small">No tags</span>`}</div>
+    <div style="height:10px"></div>
+    <div class="small">${escapeHtml(n.notes || "")}</div>
+  `;
+}
+
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+
+/** ---------------------------
+ *  5) Search + dimming
+ *  --------------------------- */
+const searchEl = document.getElementById("search");
+let lastQuery = "";
+
+function matches(node, q){
+  const hay = `${node.name} ${node.title} ${node.dept} ${node.location} ${(node.tags||[]).join(" ")} ${node.notes||""}`.toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+
+function applySearchDim(){
+  const q = lastQuery.trim().toLowerCase();
+  const nodes = [...viewport.querySelectorAll(".node")];
+  if (!q){
+    nodes.forEach(n=>n.classList.remove("dim"));
+    return;
+  }
+  for (const g of nodes){
+    const id = FLAT.find(x => x.node.name === g.querySelector(".title")?.textContent)?.node?.id;
+    // fallback: attempt to map by selection transform (not perfect). We'll instead store ids in dataset:
+  }
+  // Better: mark ids during render (do it now)
+  // (No-op here; actual dim handled in render with dataset)
+}
+
+// Patch: attach dataset id during render by scanning after render.
+function postRenderAttachIds(){
+  const gs = [...viewport.querySelectorAll(".node")];
+  // Order is FLAT order for visible nodes
+  let i=0;
+  for (const {node} of FLAT){
+    if (!layout.has(node.id)) continue;
+    const g = gs[i++];
+    if (g) g.dataset.id = node.id;
+  }
+  updateDimmingNow();
+}
+function updateDimmingNow(){
+  const q = lastQuery.trim().toLowerCase();
+  const gs = [...viewport.querySelectorAll(".node")];
+  if (!q){
+    gs.forEach(g=>g.classList.remove("dim"));
+    return;
+  }
+  gs.forEach(g=>{
+    const id = g.dataset.id;
+    const node = byId.get(id);
+    if (!node) return;
+    const ok = matches(node, q);
+    g.classList.toggle("dim", !ok);
+  });
+}
+
+searchEl.addEventListener("keydown", (e)=>{
+  if (e.key === "Enter"){
+    lastQuery = searchEl.value || "";
+    const q = lastQuery.trim();
+    if (!q) { render(); postRenderAttachIds(); return; }
+    const found = FLAT.map(x=>x.node).find(n => matches(n, q));
+    render();
+    postRenderAttachIds();
+    if (found){
+      // ensure path to found is expanded
+      expandPath(found.id);
+      render();
+      postRenderAttachIds();
+      select(found.id);
+      centerOn(found.id);
+    }
+  } else {
+    // live dim while typing
+    lastQuery = searchEl.value || "";
+    updateDimmingNow();
+  }
+});
+
+function expandPath(id){
+  // expand ancestors
+  let cur = FLAT.find(x=>x.node.id===id);
+  while(cur && cur.parent){
+    collapsed.delete(cur.parent.id);
+    cur = FLAT.find(x=>x.node.id===cur.parent.id);
+  }
+}
+
+/** ---------------------------
+ *  6) Pan + zoom (transform group)
+ *  --------------------------- */
+let scale = 1;
+let tx = 0, ty = 0;
+let isPanning = false;
+let panStart = {x:0,y:0};
+
+function setTransform(){
+  viewport.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
+  // Match grid transform so it "sticks" to movement
+  const grid = document.getElementById("grid");
+  grid.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+svg.addEventListener("mousedown", (e)=>{
+  // only pan if clicking empty space (not nodes)
+  if (e.target.closest && e.target.closest(".node")) return;
+  isPanning = true;
+  panStart = { x: e.clientX - tx, y: e.clientY - ty };
+});
+
+window.addEventListener("mousemove", (e)=>{
+  if (!isPanning) return;
+  tx = e.clientX - panStart.x;
+  ty = e.clientY - panStart.y;
+  setTransform();
+});
+
+window.addEventListener("mouseup", ()=>{ isPanning = false; });
+
+svg.addEventListener("wheel", (e)=>{
+  e.preventDefault();
+  const delta = -Math.sign(e.deltaY) * 0.08;
+  const newScale = clamp(scale * (1 + delta), 0.45, 2.2);
+
+  // zoom around mouse position
+  const pt = clientToSvg(e.clientX, e.clientY);
+  const before = svgToWorld(pt.x, pt.y, scale, tx, ty);
+  scale = newScale;
+  const after = svgToWorld(pt.x, pt.y, scale, tx, ty);
+  tx += (after.x - before.x) * scale;
+  ty += (after.y - before.y) * scale;
+
+  setTransform();
+}, { passive: false });
+
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+function clientToSvg(clientX, clientY){
+  const rect = svg.getBoundingClientRect();
+  const x = (clientX - rect.left);
+  const y = (clientY - rect.top);
+  return {x, y};
+}
+function svgToWorld(x, y, s, tx, ty){
+  // inverse transform: (x - tx)/s
+  return { x: (x - tx)/s, y: (y - ty)/s };
+}
+
+/** Center view on a node */
+function centerOn(id){
+  const l = layout.get(id);
+  if (!l) return;
+  const rect = svg.getBoundingClientRect();
+  const cx = l.x + NODE_W/2;
+  const cy = l.y + NODE_H/2;
+
+  tx = rect.width/2 - cx * scale;
+  ty = rect.height/2 - cy * scale;
+  setTransform();
+}
+
+/** ---------------------------
+ *  7) Buttons
+ *  --------------------------- */
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  scale = 1; tx = 40; ty = 20;
+  setTransform();
+});
+document.getElementById("expandAllBtn").addEventListener("click", ()=>{
+  collapsed.clear();
+  render(); postRenderAttachIds();
+});
+document.getElementById("collapseAllBtn").addEventListener("click", ()=>{
+  // collapse everything except CEO (feels less chaotic)
+  collapsed = new Set(FLAT.map(x=>x.node.id).filter(id=>id!=="ceo"));
+  render(); postRenderAttachIds();
+});
+
+/** Click background to clear selection */
+document.getElementById("stage").addEventListener("click", (e)=>{
+  if (e.target.closest && e.target.closest(".node")) return;
+  selectedId = null;
+  updateDetails(null);
+  render(); postRenderAttachIds();
+});
+
+/** ---------------------------
+ *  8) Init
+ *  --------------------------- */
+render();
+postRenderAttachIds();
+scale = 1; tx = 40; ty = 20;
+setTransform();
+</script>
+</body>
+</html>
