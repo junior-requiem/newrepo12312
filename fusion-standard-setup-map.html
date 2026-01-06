@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Oracle Fusion (Standard) Setup Map — Friendly Interactive Demo</title>
+  <style>
+    :root{
+      --bg1:#f7fbff;
+      --bg2:#f1f6ff;
+      --panel:#ffffff;
+      --ink:#0f172a;
+      --muted:#475569;
+      --muted2:#64748b;
+      --stroke:#e2e8f0;
+      --shadow: 0 18px 40px rgba(15,23,42,.10);
+      --shadow2: 0 10px 22px rgba(15,23,42,.10);
+      --radius:18px;
+      --blue:#2563eb;
+      --blue2:#60a5fa;
+      --purple:#7c3aed;
+      --green:#10b981;
+      --amber:#f59e0b;
+      --rose:#f43f5e;
+      --chip:#eef2ff;
+      --chipStroke:#c7d2fe;
+      --focus:#0ea5e9;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html, body { height: 100%; margin: 0; font-family: var(--sans); color: var(--ink); overflow: hidden; }
+    body{
+      background:
+        radial-gradient(900px 700px at 15% 10%, rgba(96,165,250,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 15%, rgba(124,58,237,.20), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    .app{
+      height: 100%;
+      display:grid;
+      grid-template-columns: 320px 1fr 380px;
+      gap: 12px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    /* Left/Right panels */
+    .left, .right{
+      background: rgba(255,255,255,.78);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+    .left header, .right header{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--stroke);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .logo{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      background:
+        conic-gradient(from 210deg, rgba(37,99,235,.95), rgba(124,58,237,.85), rgba(16,185,129,.85), rgba(37,99,235,.95));
+      box-shadow: 0 12px 22px rgba(15,23,42,.18);
+    }
+    .brand .t{
+      display:flex;
+      flex-direction: column;
+      line-height: 1.1;
+      min-width: 0;
+    }
+    .brand .t strong{
+      font-size: 13px;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .brand .t span{
+      font-size: 12px;
+      color: var(--muted2);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pillbtn{
+      border: 1px solid var(--stroke);
+      background: white;
+      border-radius: 999px;
+      padding: 8px 10px;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      font-weight: 700;
+      font-size: 12px;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .pillbtn:hover{ border-color: #cbd5e1; }
+    .pillbtn:active{ transform: translateY(1px); }
+
+    .left .content{
+      padding: 12px 14px 14px;
+      overflow:auto;
+      height: calc(100% - 62px);
+    }
+
+    .searchbox{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      background: white;
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      padding: 10px 10px;
+      box-shadow: var(--shadow2);
+    }
+    .searchbox input{
+      border:none;
+      outline:none;
+      width:100%;
+      font-size: 14px;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted2);
+      padding: 3px 6px;
+      border: 1px solid var(--stroke);
+      border-bottom-width: 2px;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .section{
+      margin-top: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(255,255,255,.9);
+    }
+    .section summary{
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      user-select:none;
+    }
+    .section summary::-webkit-details-marker { display:none; }
+    .section summary .label{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+    .dot.purple{ background: var(--purple); box-shadow: 0 0 0 4px rgba(124,58,237,.12); }
+    .dot.green{ background: var(--green); box-shadow: 0 0 0 4px rgba(16,185,129,.12); }
+    .dot.amber{ background: var(--amber); box-shadow: 0 0 0 4px rgba(245,158,11,.12); }
+    .dot.rose{ background: var(--rose); box-shadow: 0 0 0 4px rgba(244,63,94,.12); }
+
+    .section .inner{
+      padding: 0 12px 12px;
+      display:grid;
+      gap: 8px;
+    }
+
+    .toggleRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .toggleRow .meta{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 0;
+    }
+    .toggleRow .meta strong{ font-size: 13px; }
+    .toggleRow .meta span{ font-size: 12px; color: var(--muted2); white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
+    .switch{
+      width: 46px; height: 26px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      position: relative;
+      cursor:pointer;
+      flex-shrink: 0;
+      border: 1px solid #d1d5db;
+      transition: .18s ease;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      border-radius: 999px;
+      background: white;
+      box-shadow: 0 10px 18px rgba(15,23,42,.15);
+      transition: .18s ease;
+    }
+    .switch.on{
+      background: rgba(37,99,235,.25);
+      border-color: rgba(37,99,235,.35);
+    }
+    .switch.on::after{ left: 23px; }
+
+    .minihelp{
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: rgba(255,255,255,.65);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* Stage */
+    .stage{
+      position: relative;
+      background: rgba(255,255,255,.60);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .topHud{
+      position:absolute;
+      top: 12px; left: 12px; right: 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hudCard{
+      pointer-events: auto;
+      background: rgba(255,255,255,.86);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 9px 12px;
+      box-shadow: var(--shadow2);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      user-select:none;
+    }
+
+    .hudBtns{
+      display:flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .grid{
+      position:absolute; inset:0;
+      background-image:
+        radial-gradient(circle at 1px 1px, rgba(15,23,42,.12) 1px, transparent 0);
+      background-size: 22px 22px;
+      opacity:.35;
+      transform-origin: 0 0;
+      pointer-events:none;
+    }
+
+    svg{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      cursor: grab;
+      user-select:none;
+    }
+    svg:active{ cursor: grabbing; }
+
+    /* Right panel */
+    .right .content{
+      padding: 12px 14px 14px;
+      overflow:auto;
+      height: calc(100% - 62px);
+    }
+    .card{
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      box-shadow: var(--shadow2);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .titleRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .titleRow h2{
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--chip);
+      border: 1px solid var(--chipStroke);
+      color: #3730a3;
+      white-space: nowrap;
+    }
+    .sub{
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .tabs{
+      display:flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .tab{
+      border: 1px solid var(--stroke);
+      background: white;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{
+      border-color: rgba(14,165,233,.45);
+      box-shadow: 0 0 0 4px rgba(14,165,233,.10);
+    }
+
+    .chips{
+      margin-top: 10px;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.9);
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .callout{
+      margin-top: 10px;
+      border-left: 4px solid rgba(37,99,235,.55);
+      background: rgba(37,99,235,.06);
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .list{
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    /* Nodes + edges */
+    .edge{
+      stroke: rgba(15,23,42,.18);
+      stroke-width: 2.2;
+      fill: none;
+    }
+    .edge.soft{ stroke-dasharray: 5 7; }
+    .edge.focus{
+      stroke: rgba(14,165,233,.85);
+      stroke-width: 3.2;
+      stroke-linecap: round;
+    }
+
+    .node rect{
+      fill: rgba(255,255,255,.94);
+      stroke: rgba(148,163,184,.55);
+      stroke-width: 1.4;
+      rx: 16; ry: 16;
+      filter: drop-shadow(0 12px 14px rgba(15,23,42,.10));
+    }
+    .node .emoji{ font-size: 18px; }
+    .node .name{
+      font-weight: 900;
+      font-size: 13px;
+      fill: var(--ink);
+    }
+    .node .desc{
+      font-size: 11.5px;
+      fill: rgba(71,85,105,.95);
+    }
+    .node .pill{
+      font-family: var(--mono);
+      font-size: 10.5px;
+      fill: rgba(71,85,105,.92);
+    }
+    .node:hover rect{
+      stroke: rgba(14,165,233,.55);
+    }
+    .node.selected rect{
+      stroke: rgba(14,165,233,.95);
+      stroke-width: 2.2;
+      filter: drop-shadow(0 18px 18px rgba(14,165,233,.18));
+    }
+    .node.dim{ opacity: .20; }
+    .node .badgeDot{ opacity:.85; }
+
+    /* Modal (tour) */
+    .modal{
+      position:absolute;
+      inset: 0;
+      background: rgba(15,23,42,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 50;
+      padding: 18px;
+    }
+    .modal.on{ display:flex; }
+    .modalCard{
+      width: min(760px, 100%);
+      background: white;
+      border-radius: 22px;
+      border: 1px solid var(--stroke);
+      box-shadow: 0 30px 70px rgba(15,23,42,.25);
+      overflow:hidden;
+    }
+    .modalCard header{
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--stroke);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .modalCard header strong{ font-size: 14px; }
+    .modalBody{
+      padding: 14px 16px 16px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+    .steps{
+      margin-top: 10px;
+      display:grid;
+      gap: 10px;
+    }
+    .step{
+      padding: 10px 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      background: rgba(241,245,249,.65);
+    }
+    .step strong{ color: var(--ink); }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- LEFT -->
+    <aside class="left">
+      <header>
+        <div class="brand">
+          <div class="logo"></div>
+          <div class="t">
+            <strong>Fusion Setup Map</strong>
+            <span>friendly “how it’s configured” view</span>
+          </div>
+        </div>
+        <button class="pillbtn" id="tourBtn">✨ Tour</button>
+      </header>
+
+      <div class="content">
+        <div class="searchbox">
+          <input id="search" placeholder="Search setup objects… (ex: Legal Employer, BU, Data Role)" />
+          <span class="kbd">Enter</span>
+        </div>
+
+        <details class="section" open>
+          <summary>
+            <div class="label"><span class="dot"></span> Layers</div>
+            <span style="color:var(--muted2); font-size:12px;">show/hide</span>
+          </summary>
+          <div class="inner" id="layerToggles"></div>
+        </details>
+
+        <details class="section" open>
+          <summary>
+            <div class="label"><span class="dot green"></span> “Typical Setup Order”</div>
+            <span style="color:var(--muted2); font-size:12px;">hint</span>
+          </summary>
+          <div class="inner">
+            <div class="minihelp">
+              Think of this as the “why does my payroll element entry fail?” checklist. 😄<br><br>
+              <b>Common flow:</b> Enterprise &amp; Legal → Business Units &amp; Reference Data → Workforce Structures →
+              Security → (then module specifics like Payroll/OTL/Absence).
+              <ul class="list">
+                <li>Use <b>search</b> + <b>Enter</b> to jump and highlight relationships.</li>
+                <li>Click a node to see the <b>what/why</b> + example + “where to configure” note.</li>
+                <li>Drag to pan; scroll to zoom.</li>
+              </ul>
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>
+            <div class="label"><span class="dot purple"></span> Quick Actions</div>
+            <span style="color:var(--muted2); font-size:12px;">tools</span>
+          </summary>
+          <div class="inner">
+            <div class="toggleRow">
+              <div class="meta">
+                <strong>Reset view</strong>
+                <span>Center + default zoom</span>
+              </div>
+              <button class="pillbtn" id="resetBtn">🎯 Reset</button>
+            </div>
+
+            <div class="toggleRow">
+              <div class="meta">
+                <strong>Show only “connected”</strong>
+                <span>When a node is selected</span>
+              </div>
+              <div class="switch" id="focusMode"></div>
+            </div>
+
+            <div class="toggleRow">
+              <div class="meta">
+                <strong>Playful edge style</strong>
+                <span>Solid ↔ dotted for “soft” links</span>
+              </div>
+              <div class="switch on" id="softEdges"></div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </aside>
+
+    <!-- STAGE -->
+    <main class="stage" id="stage">
+      <div class="topHud">
+        <div class="hudCard">🧭 Drag to pan • 🔍 Scroll to zoom • 🧩 Click nodes to learn “standard Fusion” structure</div>
+        <div class="hudBtns">
+          <button class="pillbtn" id="zoomOutBtn">➖</button>
+          <button class="pillbtn" id="zoomInBtn">➕</button>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <svg id="svg" viewBox="0 0 1500 900" aria-label="Oracle Fusion setup map">
+        <g id="viewport"></g>
+      </svg>
+    </main>
+
+    <!-- RIGHT -->
+    <aside class="right">
+      <header>
+        <div class="brand">
+          <div class="logo" style="background: conic-gradient(from 210deg, rgba(14,165,233,.95), rgba(37,99,235,.85), rgba(124,58,237,.85), rgba(14,165,233,.95));"></div>
+          <div class="t">
+            <strong>Details</strong>
+            <span>click any node</span>
+          </div>
+        </div>
+        <button class="pillbtn" id="clearBtn">🧽 Clear</button>
+      </header>
+
+      <div class="content">
+        <div class="card" id="detailsCard">
+          <div class="titleRow">
+            <h2>Welcome 👋</h2>
+            <span class="tag">Click something</span>
+          </div>
+          <div class="sub">
+            This is a friendly “standard Oracle Fusion ERP/HCM configuration map.” It’s not your exact tenant (obviously),
+            but the objects and relationships are based on Oracle’s standard enterprise/workforce/security concepts.
+          </div>
+          <div class="callout">
+            Pro tip: search “Legal Employer” or “Business Unit” and press Enter. That’s where most “why won’t it let me…”
+            mysteries begin.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="titleRow">
+            <h2>Legend</h2>
+            <span class="tag">colors</span>
+          </div>
+          <div class="chips">
+            <span class="chip">🧱 Enterprise</span>
+            <span class="chip">🏢 Reference Data &amp; BU</span>
+            <span class="chip">👥 Workforce</span>
+            <span class="chip">🛡️ Security</span>
+            <span class="chip">💸 Payroll (sample)</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MODAL / TOUR -->
+    <div class="modal" id="modal">
+      <div class="modalCard">
+        <header>
+          <strong>✨ Quick Tour: “Fusion setup objects in human language”</strong>
+          <button class="pillbtn" id="closeTourBtn">Close</button>
+        </header>
+        <div class="modalBody">
+          This page is designed to feel like a friendly “ERP map,” not an angry PDF.
+          Click nodes to see what they are, why they matter, and how they connect.
+          <div class="steps">
+            <div class="step"><strong>1) Start with “Enterprise”</strong><br>Enterprise → Legal Entity → Legal Employer / PSU → Legislative Data Group (for payroll statutory rules).</div>
+            <div class="step"><strong>2) Then Business Units + Reference Data Sets</strong><br>BUs drive what reference data you can pick on transactions (via set assignments).</div>
+            <div class="step"><strong>3) Workforce Structures</strong><br>Locations, Departments, Jobs, Positions, Grades, and Trees… the scaffolding for HR.</div>
+            <div class="step"><strong>4) Security</strong><br>Abstract roles (Employee/Line Manager), job roles, duty roles, data roles, and security profiles.</div>
+            <div class="step"><strong>5) Module specifics</strong><br>Payroll, Absence, Time &amp; Labor, etc. hang off the scaffolding above.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+const LAYERS = [
+  { id: "enterprise", name: "Enterprise", hint: "Foundational legal / enterprise structure" },
+  { id: "refdata", name: "Business Units & Reference Data", hint: "Sets & sharing drive what data you can use" },
+  { id: "workforce", name: "Workforce Structures", hint: "Jobs, positions, grades, departments, locations" },
+  { id: "security", name: "Security (RBAC)", hint: "Abstract/job/data roles + security profiles" },
+  { id: "payroll", name: "Payroll (sample)", hint: "Example module hanging off the foundation" },
+];
+
+const NODES = [
+  { id:"ent", layer:"enterprise", emoji:"🏛️", name:"Enterprise", blurb:"Top-level container for your organization.",
+    what:"The enterprise is the top level that groups legal and management structures.",
+    why:"Everything else hangs off this. If your structure is wrong, downstream configs get weird.",
+    where:"Setup & Maintenance → Define Enterprise Structures",
+    examples:["‘InFusion’ (Oracle demo enterprise)"], tags:["Foundation"] },
+
+  { id:"le", layer:"enterprise", emoji:"⚖️", name:"Legal Entity", blurb:"A legal company recognized by law.",
+    what:"Owns assets/obligations and is used on many ERP transactions.",
+    why:"Financial/legal reporting and statutory compliance need legal entities.",
+    where:"Setup & Maintenance → Define Legal Entities",
+    examples:["Northstar Dynamics, Inc.","Northstar Dynamics UK Ltd."], tags:["ERP","Legal"] },
+
+  { id:"legalEmployer", layer:"enterprise", emoji:"🧾", name:"Legal Employer", blurb:"The legal entity that employs workers.",
+    what:"In HCM, a legal entity can be flagged as a legal employer.",
+    why:"Employment contracts, reporting, and HR rules often key off this.",
+    where:"HCM Setup → Legal Entities (as Legal Employer)",
+    examples:["Northstar US Legal Employer"], tags:["HCM"] },
+
+  { id:"psu", layer:"enterprise", emoji:"🏦", name:"Payroll Statutory Unit (PSU)", blurb:"Statutory payroll reporting unit.",
+    what:"Often the same legal entity in a country; tied to payroll statutory reporting.",
+    why:"Payroll processing/statutory reporting can fail if this isn’t set correctly.",
+    where:"HCM Setup → Legal Entities (as PSU)",
+    examples:["Northstar US PSU"], tags:["Payroll","Statutory"] },
+
+  { id:"ldg", layer:"enterprise", emoji:"🌍", name:"Legislative Data Group (LDG)", blurb:"Country/legislation context for payroll/HCM.",
+    what:"Represents legislative rules and grouping for payroll/statutory objects.",
+    why:"Key for statutory rules (tax, reporting, balances).",
+    where:"HCM Setup → Manage Legislative Data Groups",
+    examples:["United States LDG","United Kingdom LDG"], tags:["Legislation"] },
+
+  { id:"bu", layer:"refdata", emoji:"🏢", name:"Business Unit (BU)", blurb:"Operational unit for transactions.",
+    what:"Used to manage work and transactions; also used for reference data filtering.",
+    why:"BU drives which reference data is available via set assignment.",
+    where:"Setup & Maintenance → Manage Business Units",
+    examples:["Northstar Consulting BU","Northstar Products BU"], tags:["ERP","HCM"] },
+
+  { id:"rds", layer:"refdata", emoji:"🧩", name:"Reference Data Set", blurb:"Logical grouping of reference data.",
+    what:"Sets control sharing/visibility of reference data across business units.",
+    why:"Prevents ‘everyone can see everyone’s stuff’ and enables filtering by BU on transactions.",
+    where:"Setup & Maintenance → Manage Set Assignments / Reference Data Sets",
+    examples:["Enterprise Set","Common Set","Jobs Set"], tags:["Sharing"] },
+
+  { id:"setAssign", layer:"refdata", emoji:"🔗", name:"BU Set Assignment", blurb:"Connects BUs ↔ Sets.",
+    what:"Defines which sets a BU uses, controlling reference data availability.",
+    why:"If a value doesn’t appear in a LOV, this is a prime suspect.",
+    where:"Setup & Maintenance → Manage Set Assignments",
+    examples:["Consulting BU uses Enterprise + Jobs Set"], tags:["Troubleshoot"] },
+
+  { id:"location", layer:"workforce", emoji:"📍", name:"Location", blurb:"Physical site or address.",
+    what:"Used for assignments, reporting, compliance, and sometimes payroll taxation.",
+    why:"A surprising amount of HR processes depend on accurate location setup.",
+    where:"HCM Setup → Manage Locations",
+    examples:["NYC HQ","Remote (US)"], tags:["Workforce"] },
+
+  { id:"department", layer:"workforce", emoji:"🏷️", name:"Department", blurb:"Organizational unit for reporting.",
+    what:"Used in assignments and reporting structures; can be in department trees.",
+    why:"Impacts managerial reporting and cost allocations in many designs.",
+    where:"HCM Setup → Manage Departments",
+    examples:["IT","Payroll","Finance"], tags:["Org"] },
+
+  { id:"job", layer:"workforce", emoji:"🧰", name:"Job", blurb:"A generic role definition.",
+    what:"Defines job attributes and requirements; can be shared across orgs.",
+    why:"Jobs enable consistent comparisons and rules across positions.",
+    where:"HCM Setup → Manage Jobs",
+    examples:["Business Analyst","HR Specialist"], tags:["Workforce"] },
+
+  { id:"position", layer:"workforce", emoji:"🪑", name:"Position", blurb:"A specific slot in the org.",
+    what:"Represents a specific occurrence of work, often with reporting relationships.",
+    why:"Positions help when you need precise headcount control and reporting.",
+    where:"HCM Setup → Manage Positions",
+    examples:["BA II — HR Systems (Seattle)"], tags:["Headcount"] },
+
+  { id:"grade", layer:"workforce", emoji:"🎖️", name:"Grade", blurb:"Level/band structure.",
+    what:"Grades/grade ladders align roles with progression and compensation ranges.",
+    why:"Comp, approvals, and HR policies often depend on grade structure.",
+    where:"HCM Setup → Manage Grades",
+    examples:["G5","G6","Manager I"], tags:["Comp"] },
+
+  { id:"trees", layer:"workforce", emoji:"🌳", name:"Trees / Hierarchies", blurb:"Department/Org trees for reporting.",
+    what:"Hierarchies for departments, organizations, positions, etc.",
+    why:"Security and reporting often use these trees (who can see what).",
+    where:"FSM → Manage Trees",
+    examples:["Department Tree (Corporate)","Position Tree (Reporting)"], tags:["Reporting"] },
+
+  { id:"abstractRole", layer:"security", emoji:"🧑‍💼", name:"Abstract Roles", blurb:"Employee / Line Manager, etc.",
+    what:"Worker identity roles independent of the job they do.",
+    why:"Baseline access for workers (self-service, manager actions).",
+    where:"Security Console → Roles (Abstract)",
+    examples:["Employee","Line Manager","Contingent Worker"], tags:["RBAC"] },
+
+  { id:"jobRole", layer:"security", emoji:"🧑‍🔧", name:"Job Roles", blurb:"Access based on function (HR Specialist, Payroll Manager…).",
+    what:"Job roles bundle duty roles/privileges for a business function.",
+    why:"Most “what can this user do?” starts here.",
+    where:"Security Console → Roles (Job)",
+    examples:["Human Resource Specialist","Payroll Manager"], tags:["RBAC"] },
+
+  { id:"dutyRole", layer:"security", emoji:"🧱", name:"Duty Roles", blurb:"Reusable blocks of privileges.",
+    what:"Duty roles group privileges; job roles inherit duty roles.",
+    why:"The building blocks for permissions and UI access.",
+    where:"Security Console → Roles (Duty)",
+    examples:["Manage Person Duty","Maintain Payroll Definitions Duty"], tags:["Privileges"] },
+
+  { id:"dataRole", layer:"security", emoji:"🗂️", name:"HCM Data Roles", blurb:"Job role + data scope.",
+    what:"Usually a job role plus security profiles that limit what data you can see.",
+    why:"Without data scope, you either see nothing… or everything. Neither is fun.",
+    where:"Security Console → Roles (Data)",
+    examples:["HR Specialist (US BU)","Payroll Admin (UK LDG)"], tags:["Scope"] },
+
+  { id:"secProfiles", layer:"security", emoji:"🔐", name:"Security Profiles", blurb:"Define which workers/data are accessible.",
+    what:"Profiles for person, position, organization, payroll, etc.",
+    why:"They provide the ‘who/what’ boundaries for data roles.",
+    where:"HCM Security → Manage Security Profiles",
+    examples:["Person Security Profile: US employees only"], tags:["Scope"] },
+
+  { id:"payDef", layer:"payroll", emoji:"💸", name:"Payroll Definition", blurb:"Defines payroll calendar/rules for a group.",
+    what:"Payroll definition groups workers and defines processing rules/schedule.",
+    why:"Needed before you can run payroll processes meaningfully.",
+    where:"Payroll Setup → Manage Payroll Definitions",
+    examples:["US Biweekly Payroll"], tags:["Payroll"] },
+
+  { id:"elements", layer:"payroll", emoji:"🧾", name:"Elements", blurb:"Earnings/deductions you pay or withhold.",
+    what:"Element definitions drive calculations and payroll results.",
+    why:"Everything paid or withheld generally maps to elements.",
+    where:"Payroll Setup → Manage Elements",
+    examples:["Regular Salary","Overtime","Health Deduction"], tags:["Payroll"] },
+];
+
+const EDGES = [
+  { from:"ent", to:"le", type:"hard", note:"Enterprise contains legal entities" },
+  { from:"le", to:"legalEmployer", type:"hard", note:"Legal entity can be a legal employer" },
+  { from:"le", to:"psu", type:"hard", note:"Legal entity can be a PSU for payroll" },
+  { from:"psu", to:"ldg", type:"hard", note:"PSU associated to legislative context" },
+
+  { from:"ent", to:"bu", type:"hard", note:"Enterprise uses business units" },
+  { from:"rds", to:"setAssign", type:"hard", note:"Sets assigned to BUs" },
+  { from:"bu", to:"setAssign", type:"hard", note:"BU uses set assignments" },
+
+  { from:"setAssign", to:"job", type:"soft", note:"Jobs often controlled via sets" },
+  { from:"setAssign", to:"grade", type:"soft", note:"Grades/locations/depts may be set-controlled" },
+  { from:"setAssign", to:"department", type:"soft", note:"Department visibility can depend on set assignment" },
+  { from:"setAssign", to:"location", type:"soft", note:"Location LOVs can be BU-contextual" },
+
+  { from:"job", to:"position", type:"hard", note:"Positions often reference jobs" },
+  { from:"grade", to:"position", type:"soft", note:"Positions can be graded" },
+  { from:"department", to:"position", type:"soft", note:"Positions can belong to departments" },
+  { from:"location", to:"position", type:"soft", note:"Positions can be tied to locations" },
+  { from:"department", to:"trees", type:"hard", note:"Departments live in hierarchies" },
+  { from:"position", to:"trees", type:"hard", note:"Position reporting hierarchies" },
+
+  { from:"abstractRole", to:"jobRole", type:"soft", note:"Users often have abstract + job roles" },
+  { from:"jobRole", to:"dutyRole", type:"hard", note:"Job roles inherit duty roles" },
+  { from:"dataRole", to:"jobRole", type:"hard", note:"Data roles inherit a base job role" },
+  { from:"dataRole", to:"secProfiles", type:"hard", note:"Data roles include security profiles" },
+  { from:"secProfiles", to:"trees", type:"soft", note:"Security often uses org/position trees" },
+  { from:"secProfiles", to:"department", type:"soft", note:"Organization scope may be department-based" },
+  { from:"secProfiles", to:"position", type:"soft", note:"Position security profile scopes by position tree" },
+
+  { from:"ldg", to:"payDef", type:"hard", note:"Payroll is legislative-contextual" },
+  { from:"payDef", to:"elements", type:"hard", note:"Payroll uses elements to calculate results" },
+  { from:"legalEmployer", to:"payDef", type:"soft", note:"Payroll groups typically align to legal employer / PSU" },
+  { from:"position", to:"payDef", type:"soft", note:"Worker assignments drive payroll membership" }
+];
+
+/* Layer toggles */
+const layerTogglesEl = document.getElementById("layerToggles");
+const visibleLayers = new Set(LAYERS.map(l => l.id));
+
+function makeToggleRow(layer){
+  const row = document.createElement("div");
+  row.className = "toggleRow";
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  const name = document.createElement("strong");
+  name.textContent = layer.name;
+  const hint = document.createElement("span");
+  hint.textContent = layer.hint;
+  meta.appendChild(name); meta.appendChild(hint);
+
+  const sw = document.createElement("div");
+  sw.className = "switch on";
+  sw.setAttribute("role","switch");
+  sw.setAttribute("aria-checked","true");
+
+  sw.addEventListener("click", ()=>{
+    const on = sw.classList.toggle("on");
+    sw.setAttribute("aria-checked", String(on));
+    if (on) visibleLayers.add(layer.id); else visibleLayers.delete(layer.id);
+    render();
+  });
+
+  row.appendChild(meta);
+  row.appendChild(sw);
+  return row;
+}
+LAYERS.forEach(l => layerTogglesEl.appendChild(makeToggleRow(l)));
+
+/* Layout */
+const LAYER_X = { enterprise:120, refdata:430, workforce:760, security:1080, payroll:1350 };
+const NODE_W = 250, NODE_H = 92, GAP_Y = 26;
+const positions = new Map();
+
+function computeLayout(){
+  positions.clear();
+  const perLayer = new Map(LAYERS.map(l => [l.id, []]));
+  for (const n of NODES){
+    if (!visibleLayers.has(n.layer)) continue;
+    perLayer.get(n.layer).push(n);
+  }
+  for (const [layerId, arr] of perLayer.entries()){
+    arr.sort((a,b)=>a.name.localeCompare(b.name));
+    arr.forEach((n, i)=>{
+      positions.set(n.id, { x: LAYER_X[layerId], y: 120 + i*(NODE_H + GAP_Y) });
+    });
+  }
+}
+
+/* Render */
+const svg = document.getElementById("svg");
+const viewport = document.getElementById("viewport");
+const grid = document.getElementById("grid");
+
+let selectedId = null;
+let focusMode = false;
+let softEdges = true;
+let query = "";
+
+function isVisibleNode(id){
+  const n = NODES.find(x=>x.id===id);
+  return !!n && visibleLayers.has(n.layer);
+}
+function connectedSet(rootId){
+  const set = new Set([rootId]);
+  for (const e of EDGES){
+    if (e.from === rootId) set.add(e.to);
+    if (e.to === rootId) set.add(e.from);
+  }
+  return set;
+}
+function matches(n, q){
+  const hay = `${n.name} ${n.blurb} ${n.what} ${n.why} ${n.where} ${(n.tags||[]).join(" ")}`.toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+function layerChip(n){
+  const layer = LAYERS.find(l=>l.id===n.layer);
+  return layer ? layer.name : n.layer;
+}
+
+function render(){
+  computeLayout();
+  viewport.innerHTML = "";
+
+  const xs=[], ys=[];
+  for (const [id, p] of positions){
+    xs.push(p.x, p.x+NODE_W);
+    ys.push(p.y, p.y+NODE_H);
+  }
+  const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1500);
+  const minY = Math.min(...ys, 0), maxY = Math.max(...ys, 900);
+  svg.setAttribute("viewBox", `${minX-160} ${minY-140} ${(maxX-minX)+320} ${(maxY-minY)+280}`);
+
+  const focus = selectedId ? connectedSet(selectedId) : null;
+
+  for (const e of EDGES){
+    if (!isVisibleNode(e.from) || !isVisibleNode(e.to)) continue;
+    const a = positions.get(e.from), b = positions.get(e.to);
+    if (!a || !b) continue;
+
+    if (focusMode && selectedId){
+      if (!(focus.has(e.from) && focus.has(e.to))) continue;
+    }
+
+    const x1 = a.x + NODE_W, y1 = a.y + NODE_H/2;
+    const x2 = b.x, y2 = b.y + NODE_H/2;
+    const dx = Math.max(120, Math.abs(x2-x1)*0.55);
+    const d = `M ${x1} ${y1} C ${x1+dx} ${y1} ${x2-dx} ${y2} ${x2} ${y2}`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+
+    let cls = "edge";
+    if (softEdges && e.type === "soft") cls += " soft";
+    if (selectedId && (e.from===selectedId || e.to===selectedId)) cls += " focus";
+    path.setAttribute("class", cls);
+    viewport.appendChild(path);
+  }
+
+  for (const n of NODES){
+    if (!visibleLayers.has(n.layer)) continue;
+    const p = positions.get(n.id);
+    if (!p) continue;
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.setAttribute("class", "node" + (n.id===selectedId ? " selected":""));
+    g.setAttribute("transform", `translate(${p.x}, ${p.y})`);
+    g.dataset.id = n.id;
+
+    let dim = false;
+    if (query.trim()){
+      dim = !matches(n, query.trim());
+    }
+    if (focusMode && selectedId){
+      dim = dim || !connectedSet(selectedId).has(n.id);
+    }
+    if (dim) g.classList.add("dim");
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("width", NODE_W);
+    rect.setAttribute("height", NODE_H);
+
+    const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dot.setAttribute("class", "badgeDot");
+    dot.setAttribute("cx", 18);
+    dot.setAttribute("cy", 18);
+    dot.setAttribute("r", 6);
+
+    const layerColor = ({
+      enterprise: "rgba(37,99,235,.95)",
+      refdata: "rgba(124,58,237,.95)",
+      workforce: "rgba(16,185,129,.95)",
+      security: "rgba(245,158,11,.95)",
+      payroll: "rgba(244,63,94,.95)"
+    })[n.layer] || "rgba(37,99,235,.95)";
+    dot.setAttribute("fill", layerColor);
+
+    const emoji = document.createElementNS("http://www.w3.org/2000/svg","text");
+    emoji.setAttribute("class","emoji");
+    emoji.setAttribute("x", 32);
+    emoji.setAttribute("y", 26);
+    emoji.textContent = n.emoji;
+
+    const name = document.createElementNS("http://www.w3.org/2000/svg","text");
+    name.setAttribute("class","name");
+    name.setAttribute("x", 58);
+    name.setAttribute("y", 26);
+    name.textContent = n.name;
+
+    const desc = document.createElementNS("http://www.w3.org/2000/svg","text");
+    desc.setAttribute("class","desc");
+    desc.setAttribute("x", 18);
+    desc.setAttribute("y", 52);
+    desc.textContent = n.blurb;
+
+    const pill = document.createElementNS("http://www.w3.org/2000/svg","text");
+    pill.setAttribute("class","pill");
+    pill.setAttribute("x", 18);
+    pill.setAttribute("y", 76);
+    pill.textContent = `Layer: ${layerChip(n)}`;
+
+    g.appendChild(rect); g.appendChild(dot); g.appendChild(emoji); g.appendChild(name); g.appendChild(desc); g.appendChild(pill);
+
+    g.addEventListener("click", (ev)=>{ ev.stopPropagation(); select(n.id); });
+
+    viewport.appendChild(g);
+  }
+
+  for (const l of LAYERS){
+    if (!visibleLayers.has(l.id)) continue;
+    const x = LAYER_X[l.id];
+    const label = document.createElementNS("http://www.w3.org/2000/svg","text");
+    label.setAttribute("x", x);
+    label.setAttribute("y", 86);
+    label.setAttribute("fill", "rgba(15,23,42,.70)");
+    label.setAttribute("font-size", "14");
+    label.setAttribute("font-weight", "900");
+    label.textContent = l.name;
+    viewport.appendChild(label);
+  }
+}
+
+/* Details panel */
+const detailsCard = document.getElementById("detailsCard");
+let activeTab = "What";
+
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+
+function renderDetails(n){
+  if (!n){
+    detailsCard.innerHTML = `
+      <div class="titleRow">
+        <h2>Welcome 👋</h2>
+        <span class="tag">Click something</span>
+      </div>
+      <div class="sub">
+        Click a node to see a friendly breakdown. Turn on <b>Show only connected</b> to keep the map calm.
+      </div>
+      <div class="callout">
+        Suggested searches: <b>Legal Entity</b>, <b>Business Unit</b>, <b>Reference Data Set</b>, <b>Data Roles</b>.
+      </div>
+    `;
+    return;
+  }
+
+  const tabs = ["What","Why","Where","Examples","Connections"];
+  const tabHtml = tabs.map(t => `<button class="tab ${t===activeTab?'active':''}" data-tab="${t}">${t}</button>`).join("");
+  const layerLabel = layerChip(n);
+  const tag = `<span class="tag">${escapeHtml(layerLabel)}</span>`;
+
+  let body = "";
+  if (activeTab === "What") body = `<div class="sub">${escapeHtml(n.what)}</div>`;
+  if (activeTab === "Why") body = `<div class="sub">${escapeHtml(n.why)}</div>`;
+  if (activeTab === "Where") body = `<div class="sub"><b>Configure in:</b><br>${escapeHtml(n.where)}</div>`;
+  if (activeTab === "Examples") body = `
+    <div class="sub">Examples you’d see in a typical tenant:</div>
+    <ul class="list">${(n.examples||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>
+  `;
+  if (activeTab === "Connections"){
+    const conns = [];
+    for (const e of EDGES){
+      if (e.from===n.id && isVisibleNode(e.to)) conns.push({id:e.to, dir:"→", note:e.note, type:e.type});
+      if (e.to===n.id && isVisibleNode(e.from)) conns.push({id:e.from, dir:"←", note:e.note, type:e.type});
+    }
+    if (!conns.length){
+      body = `<div class="sub">No visible connections in the current layer selection.</div>`;
+    } else {
+      body = `
+        <div class="sub">Click any connected item to jump:</div>
+        <ul class="list">
+          ${conns.map(c=>{
+            const other = NODES.find(x=>x.id===c.id);
+            const s = c.type==="soft" ? "soft link" : "hard link";
+            return `<li>
+              <b style="color:#0f172a">${c.dir} <a href="#" data-jump="${c.id}">${escapeHtml(other?.name || c.id)}</a></b>
+              <span style="color:#64748b"> — ${escapeHtml(c.note)} (${s})</span>
+            </li>`;
+          }).join("")}
+        </ul>
+      `;
+    }
+  }
+
+  detailsCard.innerHTML = `
+    <div class="titleRow">
+      <h2>${escapeHtml(n.emoji)} ${escapeHtml(n.name)}</h2>
+      ${tag}
+    </div>
+    <div class="sub">${escapeHtml(n.blurb)}</div>
+    <div class="tabs">${tabHtml}</div>
+    ${body}
+    <div class="chips">
+      ${(n.tags||[]).map(t=>`<span class="chip">#${escapeHtml(t)}</span>`).join("")}
+    </div>
+  `;
+
+  detailsCard.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      activeTab = btn.dataset.tab;
+      renderDetails(n);
+    });
+  });
+
+  detailsCard.querySelectorAll("[data-jump]").forEach(a=>{
+    a.addEventListener("click",(ev)=>{
+      ev.preventDefault();
+      const id = a.dataset.jump;
+      select(id);
+      centerOn(id);
+    });
+  });
+}
+
+/* Selection + search */
+function select(id){
+  selectedId = id;
+  const n = NODES.find(x=>x.id===id);
+  render();
+  renderDetails(n);
+}
+
+const searchEl = document.getElementById("search");
+searchEl.addEventListener("keydown", (e)=>{
+  if (e.key === "Enter"){
+    query = searchEl.value || "";
+    const q = query.trim();
+    render();
+    if (!q) return;
+    const found = NODES.find(n => isVisibleNode(n.id) && matches(n, q));
+    if (found){
+      select(found.id);
+      centerOn(found.id);
+    }
+  }
+});
+searchEl.addEventListener("input", ()=>{
+  query = searchEl.value || "";
+  render();
+});
+
+/* Pan + zoom */
+let scale = 1.0;
+let tx = 30, ty = 10;
+let isPanning = false;
+let panStart = {x:0,y:0};
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+function setTransform(){
+  viewport.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
+  grid.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+svg.addEventListener("mousedown",(e)=>{
+  if (e.target.closest && e.target.closest(".node")) return;
+  isPanning = true;
+  panStart = { x: e.clientX - tx, y: e.clientY - ty };
+});
+window.addEventListener("mousemove",(e)=>{
+  if (!isPanning) return;
+  tx = e.clientX - panStart.x;
+  ty = e.clientY - panStart.y;
+  setTransform();
+});
+window.addEventListener("mouseup",()=>{ isPanning = false; });
+
+svg.addEventListener("wheel",(e)=>{
+  e.preventDefault();
+  const rect = svg.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const wx = (mx - tx) / scale;
+  const wy = (my - ty) / scale;
+
+  const delta = -Math.sign(e.deltaY) * 0.10;
+  scale = clamp(scale * (1 + delta), 0.55, 2.4);
+
+  tx = mx - wx * scale;
+  ty = my - wy * scale;
+  setTransform();
+},{passive:false});
+
+function centerOn(id){
+  const p = positions.get(id);
+  if (!p) return;
+  const rect = svg.getBoundingClientRect();
+  const cx = p.x + NODE_W/2;
+  const cy = p.y + NODE_H/2;
+  tx = rect.width/2 - cx * scale;
+  ty = rect.height/2 - cy * scale;
+  setTransform();
+}
+
+/* Buttons / toggles */
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  scale = 1.0; tx = 30; ty = 10;
+  setTransform();
+});
+document.getElementById("zoomInBtn").addEventListener("click", ()=>{
+  scale = clamp(scale * 1.12, 0.55, 2.4);
+  setTransform();
+});
+document.getElementById("zoomOutBtn").addEventListener("click", ()=>{
+  scale = clamp(scale / 1.12, 0.55, 2.4);
+  setTransform();
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  selectedId = null;
+  activeTab = "What";
+  render();
+  renderDetails(null);
+});
+document.getElementById("stage").addEventListener("click",(e)=>{
+  if (e.target.closest && e.target.closest(".node")) return;
+  selectedId = null;
+  render();
+  renderDetails(null);
+});
+
+const focusModeEl = document.getElementById("focusMode");
+focusModeEl.addEventListener("click", ()=>{
+  focusMode = focusModeEl.classList.toggle("on");
+  render();
+});
+const softEdgesEl = document.getElementById("softEdges");
+softEdgesEl.addEventListener("click", ()=>{
+  softEdges = softEdgesEl.classList.toggle("on");
+  render();
+});
+
+/* Tour modal */
+const modal = document.getElementById("modal");
+document.getElementById("tourBtn").addEventListener("click", ()=> modal.classList.add("on"));
+document.getElementById("closeTourBtn").addEventListener("click", ()=> modal.classList.remove("on"));
+modal.addEventListener("click",(e)=>{ if (e.target === modal) modal.classList.remove("on"); });
+
+/* Init */
+render();
+renderDetails(null);
+setTransform();
+select("ent");
+centerOn("ent");
+</script>
+</body>
+</html>
