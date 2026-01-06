@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>City Government ERP Structure — Guided Pyramid Walkthrough (Demo)</title>
+  <style>
+    :root{
+      --bg1:#f7fbff;
+      --bg2:#f1f6ff;
+      --ink:#0f172a;
+      --muted:#475569;
+      --muted2:#64748b;
+      --stroke:#e2e8f0;
+      --shadow: 0 18px 40px rgba(15,23,42,.10);
+      --shadow2: 0 10px 22px rgba(15,23,42,.10);
+      --radius:18px;
+
+      --blue:#2563eb;
+      --purple:#7c3aed;
+      --green:#10b981;
+      --amber:#f59e0b;
+      --rose:#f43f5e;
+      --slate:#0ea5e9;
+
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    html, body { height:100%; margin:0; font-family:var(--sans); color:var(--ink); overflow:hidden; }
+    body{
+      background:
+        radial-gradient(900px 700px at 15% 10%, rgba(96,165,250,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 15%, rgba(124,58,237,.20), transparent 55%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    .app{
+      height: 100%;
+      display:grid;
+      grid-template-columns: 330px 1fr 420px;
+      gap: 12px;
+      padding: 14px;
+      box-sizing:border-box;
+    }
+
+    .panel{
+      background: rgba(255,255,255,.78);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+    .panel header{
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--stroke);
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 0;
+    }
+    .logo{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      background: conic-gradient(from 210deg, rgba(37,99,235,.95), rgba(124,58,237,.85), rgba(16,185,129,.85), rgba(37,99,235,.95));
+      box-shadow: 0 12px 22px rgba(15,23,42,.18);
+    }
+    .brand .t{ display:flex; flex-direction:column; line-height:1.1; min-width:0; }
+    .brand .t strong{ font-size: 13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .brand .t span{ font-size: 12px; color:var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .pillbtn{
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.95);
+      border-radius:999px;
+      padding: 8px 10px;
+      cursor:pointer;
+      box-shadow: var(--shadow2);
+      font-weight: 900;
+      font-size: 12px;
+      user-select:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .pillbtn:hover{ border-color:#cbd5e1; box-shadow: 0 14px 28px rgba(15,23,42,.10); }
+    .pillbtn:active{ transform: translateY(1px); }
+    .pillbtn.primary{
+      background: linear-gradient(180deg, rgba(14,165,233,.18), rgba(37,99,235,.14));
+      border-color: rgba(14,165,233,.30);
+    }
+    .pillbtn.danger{
+      background: linear-gradient(180deg, rgba(244,63,94,.16), rgba(244,63,94,.08));
+      border-color: rgba(244,63,94,.25);
+    }
+
+    .content{
+      padding: 12px 14px 14px;
+      overflow:auto;
+      height: calc(100% - 62px);
+    }
+
+    .searchbox{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background:white;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:10px 10px;
+      box-shadow: var(--shadow2);
+    }
+    .searchbox input{
+      border:none;
+      outline:none;
+      width:100%;
+      font-size: 14px;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted2);
+      padding: 3px 6px;
+      border: 1px solid var(--stroke);
+      border-bottom-width: 2px;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .section{
+      margin-top: 12px;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      overflow:hidden;
+      background: rgba(255,255,255,.9);
+    }
+    .section summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      user-select:none;
+    }
+    .section summary::-webkit-details-marker{ display:none; }
+    .section summary .label{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 950;
+      font-size: 13px;
+    }
+    .dot{
+      width: 10px; height: 10px; border-radius: 999px;
+      background: var(--blue);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+    .dot.slate{ background:var(--slate); box-shadow: 0 0 0 4px rgba(14,165,233,.12); }
+    .dot.green{ background:var(--green); box-shadow: 0 0 0 4px rgba(16,185,129,.12); }
+    .dot.purple{ background:var(--purple); box-shadow: 0 0 0 4px rgba(124,58,237,.12); }
+
+    .minihelp{
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      background: rgba(255,255,255,.65);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .toggleRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:10px;
+      padding: 8px 10px;
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .toggleRow .meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .toggleRow .meta strong{ font-size: 13px; }
+    .toggleRow .meta span{ font-size: 12px; color: var(--muted2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+    .switch{
+      width: 46px; height: 26px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      position: relative;
+      cursor:pointer;
+      flex-shrink:0;
+      border: 1px solid #d1d5db;
+      transition: .18s ease;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top: 3px; left: 3px;
+      width: 20px; height: 20px;
+      border-radius: 999px;
+      background: white;
+      box-shadow: 0 10px 18px rgba(15,23,42,.15);
+      transition: .18s ease;
+    }
+    .switch.on{ background: rgba(14,165,233,.20); border-color: rgba(14,165,233,.35); }
+    .switch.on::after{ left: 23px; }
+
+    .stage{
+      position: relative;
+      background: rgba(255,255,255,.60);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .topHud{
+      position:absolute;
+      top: 12px; left: 12px; right: 12px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 10;
+      pointer-events:none;
+    }
+    .hudCard{
+      pointer-events:auto;
+      background: rgba(255,255,255,.86);
+      border: 1px solid var(--stroke);
+      border-radius: 999px;
+      padding: 9px 12px;
+      box-shadow: var(--shadow2);
+      color: var(--muted);
+      font-size: 12px;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .grid{
+      position:absolute; inset:0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(15,23,42,.12) 1px, transparent 0);
+      background-size: 22px 22px;
+      opacity:.35;
+      transform-origin: 0 0;
+      pointer-events:none;
+    }
+    svg{ position:absolute; inset:0; width:100%; height:100%; cursor: grab; user-select:none; }
+    svg:active{ cursor: grabbing; }
+
+    .card{
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      box-shadow: var(--shadow2);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .titleRow{ display:flex; align-items:flex-start; justify-content: space-between; gap: 10px; }
+    .titleRow h2{ margin:0; font-size: 15px; line-height: 1.15; }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 950;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      color:#3730a3;
+      white-space: nowrap;
+    }
+    .sub{ margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .tabs{ display:flex; gap:8px; margin-top: 10px; flex-wrap: wrap; }
+    .tab{
+      border: 1px solid var(--stroke);
+      background: white;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-weight: 950;
+      font-size: 12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tab.active{ border-color: rgba(14,165,233,.45); box-shadow: 0 0 0 4px rgba(14,165,233,.10); }
+    .chips{ margin-top: 10px; display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.9);
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+    .callout{
+      margin-top: 10px;
+      border-left: 4px solid rgba(14,165,233,.65);
+      background: rgba(14,165,233,.06);
+      padding: 10px 10px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .list{ margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    /* SVG visuals */
+    .edge{ stroke: rgba(15,23,42,.18); stroke-width: 2.2; fill: none; }
+    .edge.soft{ stroke-dasharray: 5 7; }
+    .edge.focus{ stroke: rgba(14,165,233,.92); stroke-width: 3.2; stroke-linecap: round; }
+
+    .node rect{
+      fill: rgba(255,255,255,.95);
+      stroke: rgba(148,163,184,.55);
+      stroke-width: 1.4;
+      rx: 16; ry: 16;
+      filter: drop-shadow(0 12px 14px rgba(15,23,42,.10));
+      transition: filter .18s ease, stroke .18s ease, transform .18s ease;
+    }
+    .node .emoji{ font-size: 18px; }
+    .node .name{ font-weight: 950; font-size: 13px; fill: var(--ink); }
+    .node .desc{ font-size: 11.5px; fill: rgba(71,85,105,.95); }
+    .node .pill{ font-family: var(--mono); font-size: 10.5px; fill: rgba(71,85,105,.92); }
+    .node:hover rect{ stroke: rgba(14,165,233,.55); }
+    .node.selected rect{
+      stroke: rgba(14,165,233,.98);
+      stroke-width: 2.2;
+      filter: drop-shadow(0 18px 18px rgba(14,165,233,.18));
+    }
+    .node.touring rect{
+      stroke: rgba(244,63,94,.98);
+      stroke-width: 2.6;
+      filter: drop-shadow(0 22px 22px rgba(244,63,94,.22));
+    }
+    .node.dim{ opacity: .18; }
+    .badgeDot{ opacity: .9; }
+
+    /* Walkthrough overlay */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,.55);
+      backdrop-filter: blur(4px);
+      display:none;
+      z-index: 999;
+    }
+    .overlay.show{ display:block; }
+
+    .spotlight{
+      position: fixed;
+      inset: 0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at var(--sx, 50%) var(--sy, 50%),
+          transparent 0,
+          transparent var(--sr, 110px),
+          rgba(2,6,23,.60) calc(var(--sr, 110px) + 40px));
+    }
+
+    .tourCard{
+      position: fixed;
+      max-width: 420px;
+      width: min(420px, calc(100vw - 32px));
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(226,232,240,.9);
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(2,6,23,.35);
+      padding: 12px;
+      z-index: 1000;
+    }
+    .tourCard .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .tourCard h3{
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .tourCard .meta{
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .progressRow{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .bar{
+      flex:1;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(226,232,240,.9);
+      overflow:hidden;
+      border: 1px solid rgba(203,213,225,.8);
+    }
+    .bar > div{
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(14,165,233,.95), rgba(37,99,235,.92));
+    }
+    .stepLabel{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted2);
+      white-space: nowrap;
+    }
+    .tourBtns{
+      margin-top: 12px;
+      display:flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .kbdHint{
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: var(--muted2);
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <aside class="panel">
+      <header>
+        <div class="brand">
+          <div class="logo"></div>
+          <div class="t">
+            <strong>City ERP Map</strong>
+            <span>pyramid view + guided tour</span>
+          </div>
+        </div>
+        <button class="pillbtn primary" id="tourBtn">🧭 Walkthrough</button>
+      </header>
+
+      <div class="content">
+        <div class="searchbox">
+          <input id="search" placeholder="Search objects… (ex: Ledger, Fund, Police, Supplier)" />
+          <span class="kbd">Enter</span>
+        </div>
+
+        <details class="section" open>
+          <summary>
+            <div class="label"><span class="dot slate"></span> Filters</div>
+            <span style="color:var(--muted2); font-size:12px;">focus</span>
+          </summary>
+          <div class="inner">
+            <div class="toggleRow">
+              <div class="meta">
+                <strong>Show only connected</strong>
+                <span>When a node is selected</span>
+              </div>
+              <div class="switch" id="focusMode"></div>
+            </div>
+            <div class="toggleRow">
+              <div class="meta">
+                <strong>Dotted “soft” links</strong>
+                <span>Relationships that vary by design</span>
+              </div>
+              <div class="switch on" id="softEdges"></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="section" open>
+          <summary>
+            <div class="label"><span class="dot green"></span> Walkthrough tips</div>
+            <span style="color:var(--muted2); font-size:12px;">quick</span>
+          </summary>
+          <div class="inner">
+            <div class="minihelp">
+              The walkthrough shows the pyramid <b>one node at a time</b>:
+              it will <b>pan + zoom</b> to the node, highlight it, and explain why it matters.<br><br>
+              Use: <span class="kbd">←</span> back, <span class="kbd">→</span> next,
+              <span class="kbd">Esc</span> exit.
+            </div>
+          </div>
+        </details>
+
+        <details class="section">
+          <summary>
+            <div class="label"><span class="dot purple"></span> Best “story arc”</div>
+            <span style="color:var(--muted2); font-size:12px;">order</span>
+          </summary>
+          <div class="inner">
+            <div class="minihelp" style="margin-top:0">
+              <b>City</b> → <b>Finance</b> → <b>Ledger</b> → <b>COA</b> → <b>Funds</b> → <b>Budget</b> →<br>
+              <b>Procurement BU</b> → <b>Suppliers</b> → <b>Approvals</b> → <b>HCM</b> → <b>Legal Employer</b> →
+              <b>Departments</b> → <b>Jobs & Positions</b> → <b>Security</b> → <b>Operations</b>…
+            </div>
+          </div>
+        </details>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <div class="topHud">
+        <div class="hudCard">🏙️ City Government ERP Structure • Drag to pan • Scroll to zoom • Click nodes for details</div>
+        <div style="display:flex; gap:10px; pointer-events:auto;">
+          <button class="pillbtn" id="zoomOutBtn">➖</button>
+          <button class="pillbtn" id="zoomInBtn">➕</button>
+          <button class="pillbtn" id="resetBtn">🎯 Reset</button>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <svg id="svg" viewBox="0 0 1600 900" aria-label="City ERP map">
+        <g id="viewport"></g>
+      </svg>
+    </main>
+
+    <aside class="panel">
+      <header>
+        <div class="brand">
+          <div class="logo" style="background: conic-gradient(from 210deg, rgba(14,165,233,.95), rgba(37,99,235,.85), rgba(124,58,237,.85), rgba(14,165,233,.95));"></div>
+          <div class="t">
+            <strong>Details</strong>
+            <span>click any node</span>
+          </div>
+        </div>
+        <button class="pillbtn" id="clearBtn">🧽 Clear</button>
+      </header>
+
+      <div class="content">
+        <div class="card" id="detailsCard"></div>
+
+        <div class="card">
+          <div class="titleRow">
+            <h2>Legend</h2>
+            <span class="tag">colors</span>
+          </div>
+          <div class="chips">
+            <span class="chip">🏛️ Governance / City</span>
+            <span class="chip">💰 Finance</span>
+            <span class="chip">🧑‍🤝‍🧑 HCM</span>
+            <span class="chip">🧾 Procurement</span>
+            <span class="chip">🚧 Operations</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="spotlight" id="spotlight"></div>
+  </div>
+  <div class="tourCard" id="tourCard" style="display:none;"></div>
+
+<script>
+const NODES = [
+  { id:"city", level:0, emoji:"🏙️", name:"City of Riverton", type:"Governance",
+    blurb:"Top-level public sector enterprise.",
+    what:"The overall government enterprise that owns budgets, policies, and shared services.",
+    why:"Everything below should roll up cleanly for reporting, grants, audits, and transparency.",
+    where:"(Conceptual) Your tenant’s top enterprise container",
+    examples:["Riverton City Government"], tags:["Top"] },
+
+  { id:"finance", level:1, emoji:"💰", name:"Finance & Budget Office", type:"Finance",
+    blurb:"Accounting, budget, grants, and reporting.",
+    what:"Finance owns the accounting model: ledger, chart of accounts, funds, and controls.",
+    why:"If finance structure is wrong, every downstream transaction becomes a little tragedy.",
+    where:"Financials setup areas (Ledger/COA/Calendar/Reporting)",
+    examples:["City Finance Dept"], tags:["Finance"] },
+
+  { id:"hr", level:1, emoji:"🧑‍🤝‍🧑", name:"Human Capital (HCM)", type:"HCM",
+    blurb:"Workforce structures + security + payroll context.",
+    what:"HCM defines legal employer(s), departments, jobs, positions, and role-based access.",
+    why:"Defines who works here, where they sit, and who can do what (aka: tickets you’ll get).",
+    where:"HCM setup areas (Enterprise/Workforce/Security)",
+    examples:["HR Department"], tags:["HCM"] },
+
+  { id:"proc", level:1, emoji:"🧾", name:"Procurement & Contracts", type:"Procurement",
+    blurb:"Suppliers, requisitions, POs, contracts, purchasing.",
+    what:"Procurement sets up purchasing business units, supplier masters, and approvals.",
+    why:"Public sector needs compliance: bidding, approvals, segregation of duties, audit trails.",
+    where:"Procurement setup areas (BUs, suppliers, approvals)",
+    examples:["Central Purchasing"], tags:["Procurement"] },
+
+  { id:"ops", level:1, emoji:"🚧", name:"City Operations", type:"Operations",
+    blurb:"Departments that run the city day-to-day.",
+    what:"The operational orgs that consume ERP: time, purchasing, assets, projects, and funding.",
+    why:"They’re the reason the ERP exists. Everything else is scaffolding.",
+    where:"Operational structures (departments, locations, projects)",
+    examples:["Police, Fire, Streets, Parks"], tags:["Operations"] },
+
+  { id:"ledger", level:2, emoji:"📚", name:"City Ledger (Primary)", type:"Finance",
+    blurb:"The accounting book of record.",
+    what:"Primary ledger: calendar, currency, accounting method, and posting rules.",
+    why:"Controls how transactions post, how balances report, and how audits reconcile.",
+    where:"Financials → Define Ledger / Accounting Config",
+    examples:["Riverton Primary Ledger (USD)"], tags:["Ledger","Core"] },
+
+  { id:"coa", level:2, emoji:"🧠", name:"Chart of Accounts (COA)", type:"Finance",
+    blurb:"Segments that code transactions.",
+    what:"A segment structure like Fund / Dept / Account / Program / Project (varies by city).",
+    why:"This is your reporting DNA. COA design is where ‘easy reporting’ is born or murdered.",
+    where:"Financials → Define COA / Value Sets",
+    examples:["Fund-Dept-Account-Program-Project"], tags:["COA"] },
+
+  { id:"funds", level:2, emoji:"🏦", name:"Funds", type:"Finance",
+    blurb:"Restricted pools of money (general, grants, bonds…).",
+    what:"Funds represent legally restricted or purpose-specific money sources.",
+    why:"Public sector reporting often lives/dies on fund accounting and compliance tracking.",
+    where:"Financials → COA segment values / fund rules",
+    examples:["General Fund","Water Utility Fund","Grant Fund"], tags:["Fund"] },
+
+  { id:"budget", level:2, emoji:"🗓️", name:"Budget Control", type:"Finance",
+    blurb:"Prevent overspend + enforce approvals.",
+    what:"Budgetary control and validations on spend transactions.",
+    why:"Prevents ‘oops we spent the grant twice’ and supports appropriations control.",
+    where:"Financials → Budgetary Control setup",
+    examples:["Encumbrance accounting","Budget check on PO"], tags:["Budget"] },
+
+  { id:"procBU", level:2, emoji:"🏢", name:"Procurement Business Unit", type:"Procurement",
+    blurb:"Controls purchasing transactions & rules.",
+    what:"BU used for requisitions, POs, supplier sites, and approvals.",
+    why:"This is where purchasing ‘becomes real’: who buys, how they buy, and under what rules.",
+    where:"Procurement → Business Unit setup",
+    examples:["Riverton Purchasing BU"], tags:["BU"] },
+
+  { id:"suppliers", level:2, emoji:"🤝", name:"Suppliers & Contracts", type:"Procurement",
+    blurb:"Vendors + contract vehicles.",
+    what:"Supplier master + contract catalog for services (waste, IT, roadworks).",
+    why:"Clean supplier data prevents payment chaos, duplicate vendors, and audit headaches.",
+    where:"Procurement → Suppliers / Contracts",
+    examples:["Acme Roadworks LLC","RiverTech Services"], tags:["Supplier"] },
+
+  { id:"approvals", level:2, emoji:"✅", name:"Approvals & Controls", type:"Procurement",
+    blurb:"Routing rules, thresholds, and policies.",
+    what:"Approval rules based on amount, fund, department, and category.",
+    why:"Public sector needs documented approvals and segregation of duties.",
+    where:"Approvals Mgmt / BPM / Policy setup",
+    examples:["PO > $25k requires CFO approval"], tags:["Controls"] },
+
+  { id:"legalEmployer", level:2, emoji:"🧾", name:"Legal Employer", type:"HCM",
+    blurb:"The employing entity for workers.",
+    what:"The legal employer for city staff; can be one or multiple depending on governance.",
+    why:"Employment rules, statutory reporting, and payroll contexts attach here.",
+    where:"HCM → Legal Entities / Legal Employer",
+    examples:["City of Riverton Legal Employer"], tags:["Employer"] },
+
+  { id:"orgDept", level:2, emoji:"🏷️", name:"Departments", type:"HCM",
+    blurb:"Org units used for assignments and reporting.",
+    what:"Department organization structure (often with trees/hierarchies).",
+    why:"Used for reporting, approvals, security scope, and (sometimes) costing.",
+    where:"HCM → Manage Departments / Trees",
+    examples:["Police","Fire","Finance","Public Works"], tags:["Org"] },
+
+  { id:"jobs", level:2, emoji:"🧰", name:"Jobs & Positions", type:"HCM",
+    blurb:"Roles people do vs specific headcount slots.",
+    what:"Jobs define generic roles; positions define specific slots and reporting relationships.",
+    why:"Supports headcount control, approvals, and clean org reporting.",
+    where:"HCM → Manage Jobs / Manage Positions",
+    examples:["Police Officer I (Job)","Police Officer Slot #102 (Position)"], tags:["Workforce"] },
+
+  { id:"security", level:2, emoji:"🛡️", name:"Security (RBAC)", type:"HCM",
+    blurb:"Who can do what, and on whose data.",
+    what:"Roles + data roles with security profiles (dept / employer / person scope).",
+    why:"If this is wrong: people see too much, or nothing. Either way, you get paged.",
+    where:"Security Console + HCM Security Profiles",
+    examples:["HR Specialist (Citywide)","Line Manager (Dept scoped)"], tags:["RBAC"] },
+
+  { id:"police", level:3, emoji:"🚓", name:"Police Department", type:"Operations",
+    blurb:"Public safety operations.",
+    what:"Consumes HCM (staffing) + procurement (equipment) + finance (funding).",
+    why:"Drives overtime, vehicle spend, and grant reporting. High visibility, high scrutiny.",
+    where:"Departments / Costing / Projects (if grants)",
+    examples:["Patrol, Dispatch"], tags:["Dept"] },
+
+  { id:"fire", level:3, emoji:"🚒", name:"Fire & Rescue", type:"Operations",
+    blurb:"Emergency services.",
+    what:"Operations with staffing, assets, and compliance-heavy spend.",
+    why:"Asset spend + staffing must post cleanly to the right fund and department.",
+    where:"Departments / Assets / Payroll",
+    examples:["Station 1, Station 2"], tags:["Dept"] },
+
+  { id:"publicWorks", level:3, emoji:"🛠️", name:"Public Works", type:"Operations",
+    blurb:"Streets, sanitation, utilities.",
+    what:"Runs high-volume purchasing and asset tracking; often leads capital projects.",
+    why:"ERP is the paper trail for work: orders, purchases, assets, and costs.",
+    where:"Maintenance/Assets/Projects + Procurement",
+    examples:["Streets, Water, Solid Waste"], tags:["Dept"] },
+
+  { id:"parks", level:3, emoji:"🌳", name:"Parks & Recreation", type:"Operations",
+    blurb:"Citizen services and facilities.",
+    what:"Programs, facilities, staffing, seasonal hiring, events and fee-based services.",
+    why:"Mixed funding + seasonality: great for demonstrating program tracking.",
+    where:"Projects/Programs + HCM",
+    examples:["Community Center, Sports Leagues"], tags:["Dept"] },
+];
+
+const EDGES = [
+  { from:"city", to:"finance", type:"hard", note:"Governance oversight" },
+  { from:"city", to:"hr", type:"hard", note:"Workforce governance" },
+  { from:"city", to:"proc", type:"hard", note:"Purchasing governance" },
+  { from:"city", to:"ops", type:"hard", note:"Operational execution" },
+
+  { from:"finance", to:"ledger", type:"hard", note:"Finance runs the ledger" },
+  { from:"ledger", to:"coa", type:"hard", note:"Ledger uses a COA" },
+  { from:"coa", to:"funds", type:"hard", note:"Funds are COA values" },
+  { from:"finance", to:"budget", type:"hard", note:"Finance owns budget controls" },
+  { from:"budget", to:"procBU", type:"soft", note:"Budget checks can validate purchasing" },
+  { from:"budget", to:"approvals", type:"soft", note:"Budget can influence routing" },
+
+  { from:"proc", to:"procBU", type:"hard", note:"BU drives procurement rules" },
+  { from:"procBU", to:"suppliers", type:"hard", note:"Supplier transactions under BU rules" },
+  { from:"procBU", to:"approvals", type:"hard", note:"Approvals route reqs/POs" },
+
+  { from:"hr", to:"legalEmployer", type:"hard", note:"Employer setup" },
+  { from:"legalEmployer", to:"orgDept", type:"hard", note:"Departments in employer context" },
+  { from:"orgDept", to:"jobs", type:"soft", note:"Jobs/positions align to departments" },
+  { from:"hr", to:"security", type:"hard", note:"Role-based access + data scoping" },
+
+  { from:"ops", to:"police", type:"hard", note:"Operational departments" },
+  { from:"ops", to:"fire", type:"hard", note:"Operational departments" },
+  { from:"ops", to:"publicWorks", type:"hard", note:"Operational departments" },
+  { from:"ops", to:"parks", type:"hard", note:"Operational departments" },
+
+  { from:"police", to:"funds", type:"soft", note:"Spend posts to funds/grants" },
+  { from:"fire", to:"funds", type:"soft", note:"Spend posts to funds/grants" },
+  { from:"publicWorks", to:"procBU", type:"soft", note:"High volume purchasing" },
+];
+
+const TOUR = ["city","finance","ledger","coa","funds","budget","proc","procBU","suppliers","approvals","hr","legalEmployer","orgDept","jobs","security","ops","police","fire","publicWorks","parks"];
+
+const NODE_W = 260;
+const NODE_H = 92;
+const LEVEL_Y = { 0: 85, 1: 245, 2: 425, 3: 640 };
+
+function groupByLevel(){
+  const m = new Map();
+  for (const n of NODES){
+    if (!m.has(n.level)) m.set(n.level, []);
+    m.get(n.level).push(n);
+  }
+  for (const [lvl, arr] of m.entries()){
+    if (lvl === 1){
+      const order = ["finance","hr","proc","ops"];
+      arr.sort((a,b)=> order.indexOf(a.id) - order.indexOf(b.id));
+    } else {
+      arr.sort((a,b)=> a.name.localeCompare(b.name));
+    }
+  }
+  return m;
+}
+
+const positions = new Map();
+let focusMode = false;
+let softEdges = true;
+let query = "";
+let selectedId = null;
+
+let tourOn = false;
+let tourIdx = 0;
+
+function connectedSet(rootId){
+  const set = new Set([rootId]);
+  for (const e of EDGES){
+    if (e.from === rootId) set.add(e.to);
+    if (e.to === rootId) set.add(e.from);
+  }
+  return set;
+}
+function matches(n, q){
+  const hay = `${n.name} ${n.type} ${n.blurb} ${n.what} ${n.why} ${n.where} ${(n.tags||[]).join(" ")}`.toLowerCase();
+  return hay.includes(q.toLowerCase());
+}
+function typeColor(t){
+  const map = {
+    "Governance":"rgba(37,99,235,.95)",
+    "Finance":"rgba(16,185,129,.95)",
+    "HCM":"rgba(124,58,237,.95)",
+    "Procurement":"rgba(245,158,11,.95)",
+    "Operations":"rgba(14,165,233,.95)"
+  };
+  return map[t] || "rgba(37,99,235,.95)";
+}
+
+const svg = document.getElementById("svg");
+const viewport = document.getElementById("viewport");
+const grid = document.getElementById("grid");
+
+function computeLayout(){
+  positions.clear();
+  const byLvl = groupByLevel();
+  const WIDTH = 1700;
+  for (const [lvl, arr] of byLvl.entries()){
+    const y = LEVEL_Y[lvl] ?? (85 + lvl*180);
+    const count = arr.length;
+    const totalW = count * NODE_W + (count-1)*40;
+    let x0 = (WIDTH - totalW)/2;
+    for (let i=0;i<count;i++){
+      positions.set(arr[i].id, { x: x0 + i*(NODE_W+40), y });
+    }
+  }
+}
+
+function render(){
+  computeLayout();
+  viewport.innerHTML = "";
+
+  const xs=[], ys=[];
+  for (const [id, p] of positions){
+    xs.push(p.x, p.x+NODE_W);
+    ys.push(p.y, p.y+NODE_H);
+  }
+  const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1600);
+  const minY = Math.min(...ys, 0), maxY = Math.max(...ys, 900);
+  svg.setAttribute("viewBox", `${minX-240} ${minY-180} ${(maxX-minX)+480} ${(maxY-minY)+420}`);
+
+  const focus = selectedId ? connectedSet(selectedId) : null;
+
+  for (const e of EDGES){
+    const a = positions.get(e.from);
+    const b = positions.get(e.to);
+    if (!a || !b) continue;
+
+    if (focusMode && selectedId){
+      if (!(focus.has(e.from) && focus.has(e.to))) continue;
+    }
+
+    const x1 = a.x + NODE_W/2;
+    const y1 = a.y + NODE_H;
+    const x2 = b.x + NODE_W/2;
+    const y2 = b.y;
+    const midY = (y1 + y2) / 2;
+    const d = `M ${x1} ${y1} C ${x1} ${midY} ${x2} ${midY} ${x2} ${y2}`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d", d);
+
+    let cls = "edge";
+    if (softEdges && e.type === "soft") cls += " soft";
+    if (selectedId && (e.from===selectedId || e.to===selectedId)) cls += " focus";
+    path.setAttribute("class", cls);
+    viewport.appendChild(path);
+  }
+
+  const touringId = tourOn ? TOUR[tourIdx] : null;
+
+  for (const n of NODES){
+    const p = positions.get(n.id);
+    if (!p) continue;
+
+    const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.dataset.id = n.id;
+
+    const classes = ["node"];
+    if (n.id === selectedId) classes.push("selected");
+    if (tourOn && n.id === touringId) classes.push("touring");
+    g.setAttribute("class", classes.join(" "));
+    g.setAttribute("transform", `translate(${p.x}, ${p.y})`);
+
+    let dim = false;
+    if (query.trim()) dim = !matches(n, query.trim());
+    if (focusMode && selectedId) dim = dim || !connectedSet(selectedId).has(n.id);
+    if (tourOn && touringId) dim = dim || (n.id !== touringId);
+    if (dim) g.classList.add("dim");
+
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("width", NODE_W);
+    rect.setAttribute("height", NODE_H);
+
+    const dot = document.createElementNS("http://www.w3.org/2000/svg","circle");
+    dot.setAttribute("class","badgeDot");
+    dot.setAttribute("cx", 18);
+    dot.setAttribute("cy", 18);
+    dot.setAttribute("r", 6);
+    dot.setAttribute("fill", typeColor(n.type));
+
+    const emoji = document.createElementNS("http://www.w3.org/2000/svg","text");
+    emoji.setAttribute("class","emoji");
+    emoji.setAttribute("x", 32);
+    emoji.setAttribute("y", 26);
+    emoji.textContent = n.emoji;
+
+    const name = document.createElementNS("http://www.w3.org/2000/svg","text");
+    name.setAttribute("class","name");
+    name.setAttribute("x", 58);
+    name.setAttribute("y", 26);
+    name.textContent = n.name;
+
+    const desc = document.createElementNS("http://www.w3.org/2000/svg","text");
+    desc.setAttribute("class","desc");
+    desc.setAttribute("x", 18);
+    desc.setAttribute("y", 52);
+    desc.textContent = n.blurb;
+
+    const pill = document.createElementNS("http://www.w3.org/2000/svg","text");
+    pill.setAttribute("class","pill");
+    pill.setAttribute("x", 18);
+    pill.setAttribute("y", 76);
+    pill.textContent = `Type: ${n.type} • Level: ${n.level}`;
+
+    g.appendChild(rect); g.appendChild(dot); g.appendChild(emoji); g.appendChild(name); g.appendChild(desc); g.appendChild(pill);
+
+    g.addEventListener("click",(ev)=>{
+      ev.stopPropagation();
+      select(n.id);
+      centerOn(n.id, {preferZoom: 1.15});
+    });
+
+    viewport.appendChild(g);
+  }
+
+  if (tourOn) updateSpotlightForCurrent();
+}
+
+const detailsCard = document.getElementById("detailsCard");
+let activeTab = "What";
+
+function escapeHtml(s){
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+}
+
+function renderDetails(n){
+  if (!n){
+    detailsCard.innerHTML = `
+      <div class="titleRow">
+        <h2>Welcome 👋</h2>
+        <span class="tag">Start tour</span>
+      </div>
+      <div class="sub">Click a node, or hit <b>Walkthrough</b> to present this like a guided “ERP story”.</div>
+      <div class="callout">During the tour: <b>←</b> back, <b>→</b> next, <b>Esc</b> exit.</div>
+    `;
+    return;
+  }
+
+  const tabs = ["What","Why","Where","Examples","Connections"];
+  const tabHtml = tabs.map(t => `<button class="tab ${t===activeTab?'active':''}" data-tab="${t}">${t}</button>`).join("");
+
+  let body = "";
+  if (activeTab === "What") body = `<div class="sub">${escapeHtml(n.what)}</div>`;
+  if (activeTab === "Why") body = `<div class="sub">${escapeHtml(n.why)}</div>`;
+  if (activeTab === "Where") body = `<div class="sub"><b>Configure in:</b><br>${escapeHtml(n.where)}</div>`;
+  if (activeTab === "Examples"){
+    body = `<div class="sub">Examples:</div>
+      <ul class="list">${(n.examples||[]).map(x=>`<li>${escapeHtml(x)}</li>`).join("")}</ul>`;
+  }
+  if (activeTab === "Connections"){
+    const conns = [];
+    for (const e of EDGES){
+      if (e.from===n.id) conns.push({id:e.to, dir:"→", note:e.note, type:e.type});
+      if (e.to===n.id) conns.push({id:e.from, dir:"←", note:e.note, type:e.type});
+    }
+    body = !conns.length ? `<div class="sub">No connections.</div>` : `
+      <div class="sub">Click a connected item to jump:</div>
+      <ul class="list">
+        ${conns.map(c=>{
+          const other = NODES.find(x=>x.id===c.id);
+          const s = c.type==="soft" ? "soft link" : "hard link";
+          return `<li><b style="color:#0f172a">${c.dir} <a href="#" data-jump="${c.id}">${escapeHtml(other?.name || c.id)}</a></b>
+            <span style="color:#64748b"> — ${escapeHtml(c.note)} (${s})</span></li>`;
+        }).join("")}
+      </ul>`;
+  }
+
+  detailsCard.innerHTML = `
+    <div class="titleRow">
+      <h2>${escapeHtml(n.emoji)} ${escapeHtml(n.name)}</h2>
+      <span class="tag">${escapeHtml(n.type)}</span>
+    </div>
+    <div class="sub">${escapeHtml(n.blurb)}</div>
+    <div class="tabs">${tabHtml}</div>
+    ${body}
+    <div class="chips">${(n.tags||[]).map(t=>`<span class="chip">#${escapeHtml(t)}</span>`).join("")}</div>
+  `;
+
+  detailsCard.querySelectorAll(".tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      activeTab = btn.dataset.tab;
+      renderDetails(n);
+    });
+  });
+
+  detailsCard.querySelectorAll("[data-jump]").forEach(a=>{
+    a.addEventListener("click",(ev)=>{
+      ev.preventDefault();
+      const id = a.dataset.jump;
+      if (tourOn) stopTour();
+      select(id);
+      centerOn(id, {preferZoom: 1.12});
+    });
+  });
+}
+
+function select(id){
+  selectedId = id;
+  const n = NODES.find(x=>x.id===id);
+  render();
+  renderDetails(n);
+}
+
+const searchEl = document.getElementById("search");
+searchEl.addEventListener("keydown",(e)=>{
+  if (e.key === "Enter"){
+    query = searchEl.value || "";
+    const q = query.trim();
+    render();
+    if (!q) return;
+    const found = NODES.find(n => matches(n, q));
+    if (found){
+      if (tourOn) stopTour();
+      select(found.id);
+      centerOn(found.id, {preferZoom: 1.12});
+    }
+  }
+});
+searchEl.addEventListener("input", ()=>{ query = searchEl.value || ""; render(); });
+
+let scale = 1.0;
+let tx = 30, ty = 10;
+let isPanning = false;
+let panStart = {x:0,y:0};
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+function setTransform(){
+  viewport.setAttribute("transform", `translate(${tx} ${ty}) scale(${scale})`);
+  grid.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  if (tourOn) updateSpotlightForCurrent();
+}
+svg.addEventListener("mousedown",(e)=>{
+  if (e.target.closest && e.target.closest(".node")) return;
+  if (tourOn) return;
+  isPanning = true;
+  panStart = { x: e.clientX - tx, y: e.clientY - ty };
+});
+window.addEventListener("mousemove",(e)=>{
+  if (!isPanning) return;
+  tx = e.clientX - panStart.x;
+  ty = e.clientY - panStart.y;
+  setTransform();
+});
+window.addEventListener("mouseup",()=>{ isPanning = false; });
+
+svg.addEventListener("wheel",(e)=>{
+  if (tourOn) return;
+  e.preventDefault();
+  const rect = svg.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const wx = (mx - tx) / scale;
+  const wy = (my - ty) / scale;
+
+  const delta = -Math.sign(e.deltaY) * 0.10;
+  scale = clamp(scale * (1 + delta), 0.55, 2.4);
+
+  tx = mx - wx * scale;
+  ty = my - wy * scale;
+  setTransform();
+},{passive:false});
+
+function animateTo(newTx, newTy, newScale, ms=420){
+  const start = performance.now();
+  const sTx = tx, sTy = ty, sSc = scale;
+  const ease = (t)=> t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+
+  function frame(now){
+    const p = clamp((now - start)/ms, 0, 1);
+    const e = ease(p);
+    tx = sTx + (newTx - sTx)*e;
+    ty = sTy + (newTy - sTy)*e;
+    scale = sSc + (newScale - sSc)*e;
+    setTransform();
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function centerOn(id, opts={}){
+  const p = positions.get(id);
+  if (!p) return;
+  const rect = svg.getBoundingClientRect();
+  const cx = p.x + NODE_W/2;
+  const cy = p.y + NODE_H/2;
+
+  const desiredScale = clamp(opts.preferZoom ?? scale, 0.55, 2.4);
+  const newTx = rect.width/2 - cx * desiredScale;
+  const newTy = rect.height/2 - cy * desiredScale;
+
+  if (opts.animate) animateTo(newTx, newTy, desiredScale, opts.ms ?? 420);
+  else { tx = newTx; ty = newTy; scale = desiredScale; setTransform(); }
+}
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if (tourOn) stopTour();
+  scale = 1.0; tx = 30; ty = 10;
+  setTransform();
+  select("city");
+  centerOn("city", {preferZoom: 1.0, animate:true});
+});
+document.getElementById("zoomInBtn").addEventListener("click", ()=>{
+  if (tourOn) return;
+  scale = clamp(scale * 1.12, 0.55, 2.4);
+  setTransform();
+});
+document.getElementById("zoomOutBtn").addEventListener("click", ()=>{
+  if (tourOn) return;
+  scale = clamp(scale / 1.12, 0.55, 2.4);
+  setTransform();
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  if (tourOn) stopTour();
+  selectedId = null;
+  activeTab = "What";
+  render();
+  renderDetails(null);
+});
+document.getElementById("stage").addEventListener("click",(e)=>{
+  if (e.target.closest && e.target.closest(".node")) return;
+  if (tourOn) return;
+  selectedId = null;
+  render();
+  renderDetails(null);
+});
+
+const focusModeEl = document.getElementById("focusMode");
+focusModeEl.addEventListener("click", ()=>{
+  if (tourOn) return;
+  focusMode = focusModeEl.classList.toggle("on");
+  render();
+});
+const softEdgesEl = document.getElementById("softEdges");
+softEdgesEl.addEventListener("click", ()=>{
+  softEdges = softEdgesEl.classList.toggle("on");
+  render();
+});
+
+const overlay = document.getElementById("overlay");
+const tourCard = document.getElementById("tourCard");
+
+function startTour(){
+  tourOn = true;
+  tourIdx = 0;
+  query = "";
+  searchEl.value = "";
+  overlay.classList.add("show");
+  tourCard.style.display = "block";
+  goToTourStep(0, {animate:true});
+}
+
+function stopTour(){
+  tourOn = false;
+  overlay.classList.remove("show");
+  tourCard.style.display = "none";
+  render();
+}
+
+function goToTourStep(idx, opts={}){
+  tourIdx = clamp(idx, 0, TOUR.length-1);
+  const id = TOUR[tourIdx];
+  select(id);
+  centerOn(id, {preferZoom: 1.28, animate: opts.animate ?? true, ms: 460});
+  renderTourCard();
+  render();
+}
+
+function renderTourCard(){
+  const id = TOUR[tourIdx];
+  const n = NODES.find(x=>x.id===id);
+  const pct = Math.round(((tourIdx+1)/TOUR.length)*100);
+  const story = n?.why || n?.blurb || "";
+
+  tourCard.innerHTML = `
+    <div class="top">
+      <div>
+        <h3>${escapeHtml(n.emoji)} ${escapeHtml(n.name)}</h3>
+        <div class="meta"><b>Why it matters:</b> ${escapeHtml(story)}</div>
+      </div>
+      <button class="pillbtn danger" id="exitTour">✖ Exit</button>
+    </div>
+
+    <div class="progressRow">
+      <div class="bar"><div style="width:${pct}%"></div></div>
+      <div class="stepLabel">${tourIdx+1}/${TOUR.length}</div>
+    </div>
+
+    <div class="kbdHint">
+      <span class="kbd">←</span> Back
+      <span class="kbd">→</span> Next
+      <span class="kbd">Esc</span> Exit
+    </div>
+
+    <div class="tourBtns">
+      <button class="pillbtn" id="backBtn" ${tourIdx===0?'disabled style="opacity:.55; cursor:not-allowed"':''}>⬅ Back</button>
+      <button class="pillbtn primary" id="nextBtn">${tourIdx===TOUR.length-1 ? "🏁 Finish" : "Next ➡"}</button>
+    </div>
+  `;
+
+  positionTourCardNearNode(id);
+
+  document.getElementById("exitTour").addEventListener("click", stopTour);
+  document.getElementById("backBtn").addEventListener("click", ()=>{ if (tourIdx>0) goToTourStep(tourIdx-1, {animate:true}); });
+  document.getElementById("nextBtn").addEventListener("click", ()=>{ if (tourIdx < TOUR.length-1) goToTourStep(tourIdx+1, {animate:true}); else stopTour(); });
+}
+
+function nodeScreenCenter(id){
+  const p = positions.get(id);
+  if (!p) return {x: window.innerWidth/2, y: window.innerHeight/2, r: 140};
+  const wx = p.x + NODE_W/2;
+  const wy = p.y + NODE_H/2;
+  const svgRect = svg.getBoundingClientRect();
+  const x = svgRect.left + (wx*scale + tx);
+  const y = svgRect.top + (wy*scale + ty);
+  const r = Math.max(110, Math.min(170, 95 + 22*scale));
+  return {x, y, r};
+}
+
+function updateSpotlightForCurrent(){
+  const id = TOUR[tourIdx];
+  const {x,y,r} = nodeScreenCenter(id);
+  overlay.style.setProperty("--sx", `${x}px`);
+  overlay.style.setProperty("--sy", `${y}px`);
+  overlay.style.setProperty("--sr", `${r}px`);
+  positionTourCardNearNode(id);
+}
+
+function positionTourCardNearNode(id){
+  if (!tourOn) return;
+  const {x,y,r} = nodeScreenCenter(id);
+  const margin = 14;
+  const cardW = Math.min(420, window.innerWidth - 32);
+  const cardH = 220;
+  let left = x + r + margin;
+  let top  = y - cardH/2;
+  if (left + cardW + 14 > window.innerWidth) left = x - r - margin - cardW;
+  left = Math.max(14, Math.min(left, window.innerWidth - cardW - 14));
+  top  = Math.max(14, Math.min(top, window.innerHeight - 260));
+  tourCard.style.left = `${left}px`;
+  tourCard.style.top  = `${top}px`;
+}
+
+document.getElementById("tourBtn").addEventListener("click", ()=>{ tourOn ? stopTour() : startTour(); });
+
+window.addEventListener("resize", ()=>{ if (tourOn) updateSpotlightForCurrent(); });
+
+window.addEventListener("keydown",(e)=>{
+  if (!tourOn) return;
+  if (e.key === "Escape"){ stopTour(); return; }
+  if (e.key === "ArrowRight"){ e.preventDefault(); if (tourIdx < TOUR.length-1) goToTourStep(tourIdx+1, {animate:true}); else stopTour(); }
+  if (e.key === "ArrowLeft"){ e.preventDefault(); if (tourIdx > 0) goToTourStep(tourIdx-1, {animate:true}); }
+});
+
+render();
+renderDetails(null);
+setTransform();
+select("city");
+centerOn("city", {preferZoom:1.0, animate:true});
+</script>
+</body>
+</html>
